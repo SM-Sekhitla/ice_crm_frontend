@@ -1,7 +1,8 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# Keep npm consistent across local and Render builds.
+RUN npm install --global npm@11.19.0 && npm ci
 COPY . .
 ARG VITE_API_URL=/api/v1
 ARG VITE_FRONTEND_BASE_URL=http://localhost:5173
