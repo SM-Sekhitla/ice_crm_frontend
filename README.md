@@ -14,8 +14,8 @@ pip install -r requirements.txt
 cp .env.example .env
 # Configure SECRET_KEY and DATABASE_URL in .env, and create the PostgreSQL database.
 alembic upgrade head
-python -m app.cli create-admin
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+# Set DEFAULT_PLATFORM_ADMIN_EMAIL and DEFAULT_PLATFORM_ADMIN_PASSWORD in .env.
+uvicorn app.main:app --reload --host 127.0.0.1 --port 5002
 ```
 
 In another terminal:
@@ -27,9 +27,12 @@ cp .env.example .env
 npm run dev
 ```
 
-Vite proxies `/api` to `http://127.0.0.1:8000`. Sign in with the administrator account you created; no account is prefilled or automatically registered. A fresh server starts with no products or contacts. Create products, add staff and assign products under User management, then create/import contacts.
+Vite proxies `/api` to `http://127.0.0.1:5002`. On API startup, the configured DEFAULT_PLATFORM_ADMIN_EMAIL is created as Super Admin using DEFAULT_PLATFORM_ADMIN_PASSWORD (12–128 characters), if that email does not exist. Sign in with that account; existing passwords are never reset and no demo credentials are supplied. A fresh server starts with no products or contacts. Create products, add staff and assign products under User management, then create/import contacts.
 
-For deployments, set `VITE_API_URL` to the full API URL ending in `/api/v1` before building, or route `/api` to FastAPI through your web proxy. Set backend `CORS_ORIGINS` and `ALLOWED_HOSTS` for your deployment. Vite's development proxy is not part of the production build. Never put credentials or SMTP secrets in `VITE_` settings.
+For deployments, set `VITE_API_URL` to the full API URL ending in `/api/v1` before building, or route `/api` to FastAPI through your web proxy. Set backend `CORS_ORIGINS` and `ALLOWED_HOSTS` for your deployment. Vite's development proxy is not part of the production build.
+
+Frontend configuration is read from `.env` (or mode-specific Vite env files), not `.env.example`. Restart the dev server after editing environment files. `FRONTEND_PORT` sets the dev/preview port with strict port matching. `VITE_API_URL` sets the browser API path. `VITE_API_TARGET` sets the development proxy's backend address; `BACKEND_TARGET` is a fallback for a container address. Explicit process environment proxy settings override values from the local file. For host-side development use `http://localhost:5002`; the hostname `backend` only works in a Docker network where that service exists. `VITE_ALLOWED_HOSTS` accepts a comma-separated hostname list or a JSON array. `VITE_FRONTEND_BASE_URL` and `VITE_GIT_VERSION` are reserved metadata and currently do not affect application behavior.
+Never put credentials or provider secrets in `VITE_` settings.
 
 ## Authentication and persistence
 
@@ -45,8 +48,8 @@ CRM records are stored only in PostgreSQL. TanStack Query caches the current ser
 - Contact creation/editing, CSV import, tags, notes, export, confirmed deletion and saved filters.
 - Per-product relationships, owner reassignment, lead stages and client conversion with retained history.
 - Follow-up creation, editing, completion and reopening.
-- Staff creation, activation, roles and product assignments under User management.
-- Sender creation/editing under Email configurations. Verification means the administrator has authorised the address with the SMTP provider; SMTP credentials stay on the server.
+- Staff invitations by email, one-time password setup, roles and product assignments under User management.
+- Sender creation/editing under Email configurations. Verification means the administrator has authorised the address with the configured provider; credentials stay on the server.
 - HTML/HTM signature import, safe inline formatting, image replacement/omission, preview, server storage and deletion protection.
 - Campaign drafts, saved audiences, personalised previews, duplication, scheduling, cancellation, recipient logs and processing analytics.
 - Dashboard, tables, search, charts and CSV exports derived from actual server records.
@@ -56,7 +59,7 @@ The frontend uses a scoped `GET /api/v1/workspace` snapshot to preserve the exis
 
 ## Campaign delivery
 
-Start the persistent worker separately:
+The development runner `python3 run_backend.py` now starts both API and mail worker in one terminal. Ctrl+C stops both. If you start the API manually with Uvicorn instead, start the worker separately:
 
 ```sh
 cd ../crm_backend
@@ -64,11 +67,13 @@ source .venv/bin/activate
 python -m app.services.worker
 ```
 
-Configure the deployment SMTP connection on the backend and add an authorised sender under Email configurations. At launch, select **Send email via SMTP** or **Server simulation — no email sent**, then explicitly confirm. SMTP sends require `EMAIL_DELIVERY_ENABLED=true` and valid SMTP settings. The API rejects real sending when disabled; it never silently substitutes a simulation.
+Set backend `EMAIL_PROVIDER=smtp` or `EMAIL_PROVIDER=brevo` and add an authorised sender under Email configurations. At launch, the frontend displays **Send email via SMTP/BREVO** or **Server simulation — no email sent**. Real sends require `EMAIL_DELIVERY_ENABLED=true` and valid credentials for the selected provider. The API rejects real sending when disabled; it never silently substitutes a simulation. Restart both API and worker after changing the backend provider.
 
-Schedules use Africa/Johannesburg (SAST, UTC+02:00); the worker processes them even when the browser is closed. Submission queues the campaign; it does not claim immediate completion. Recipient consent, suppression, access and sender availability are checked again by the worker. Reports show Queued, Dispatching, Accepted, Simulated, Excluded, Failed or Unknown outcomes. SMTP acceptance does not establish inbox delivery. Opens, clicks and delivery webhooks need a provider integration.
+For Brevo, configure `BREVO_API_KEY`, `BREVO_FROM_EMAIL`, and `BREVO_FROM_NAME` in the backend `.env`. Campaigns can use any CRM sender authorised in your Brevo account and assigned to the product/user. BREVO_FROM_EMAIL and BREVO_FROM_NAME are the defaults for invitation emails. No API key is sent to the browser. See [backend provider setup](../crm_backend/README.md#switching-between-smtp-and-brevo).
 
-**Validate server preview** checks the personalised saved draft against server rules without sending email. General file attachments are not yet supported, so the previous filename-only attachment control has been removed. Uploaded signature images are supported: replace local/relative/CID image references in the import dialog, or omit them explicitly. Embedded images are stored with the signature and converted to CID attachments for SMTP delivery.
+Schedules use Africa/Johannesburg (SAST, UTC+02:00); the worker processes them even when the browser is closed. Submission queues the campaign; it does not claim immediate completion. Recipient consent, suppression, access and sender availability are checked again by the worker. Reports show Queued, Dispatching, Accepted, Simulated, Excluded, Failed or Unknown outcomes. Provider acceptance does not establish inbox delivery. Opens, clicks and delivery webhooks need a provider integration.
+
+**Validate server preview** checks the personalised saved draft against server rules without sending email. General file attachments are not yet supported, so the previous filename-only attachment control has been removed. Uploaded signature images are supported: replace local/relative/CID image references in the import dialog, or omit them explicitly. Embedded images are stored with the signature and converted to CID attachments for SMTP delivery. The Brevo API integration requires HTTPS image URLs; unsupported embedded images are rejected before sending.
 
 ## Validation
 
@@ -83,7 +88,7 @@ Unit tests cover CSV validation, HTTP error handling, session restoration/refres
 An optional real HTTP integration test exercises this frontend service layer against a running **disposable** FastAPI/PostgreSQL instance and worker. It creates test CRM records and a simulation campaign, so never run it against production. Provide an existing administrator on that test instance:
 
 ```sh
-CRM_LIVE_API_URL=http://127.0.0.1:8000/api/v1 \
+CRM_LIVE_API_URL=http://127.0.0.1:5002/api/v1 \
 CRM_TEST_EMAIL=your-test-admin-email \
 CRM_TEST_PASSWORD=your-test-admin-password \
 npm test -- src/services/live-api.test.ts
@@ -96,3 +101,25 @@ No browser or real email delivery is used in this test. Backend tests and migrat
 `src/services/http.ts` handles bearer authentication, refresh rotation, errors and API configuration. `api.ts` and `campaign-service.ts` translate UI actions to FastAPI routes. `workspace.ts` adapts transport nulls and numeric values without creating records. TanStack Query owns server data, Zustand holds transient identity and sidebar preferences, and TanStack Router handles navigation. Domain types live in `src/types`; features are separated under `src/features`.
 
 The ICE palette uses crimson `#C1121F`, near-black `#0B0B0D`, white and gold `#F4B942`, with a black app header. Styling lives in `src/styles/globals.css`.
+
+## Inviting staff and password setup
+
+User management now sends invitations instead of asking an administrator to enter an initial password. The new user remains pending until they follow the email link and set their own password. The activation page contains only **New password** and **Confirm password**. A successful setup signs them in, shows a welcome popup, and offers a short module tour. Super Admins see administration steps; BDOs see their own modules. Completion or skipping is saved to the account and survives future logins.
+
+The backend must have EMAIL_DELIVERY_ENABLED=true, valid SMTP/Brevo settings, and FRONTEND_BASE_URL pointing to this frontend at an address the recipient can reach. SMTP invitations use SMTP_FROM_EMAIL/SMTP_FROM_NAME or a verified sender; Brevo uses its configured sender. The persistent mail worker must be running; run_backend.py starts it automatically alongside the API. A successful create queues email; it does not claim the provider delivered it. User management shows invitation status and offers **Resend invitation** for pending accounts. Resending invalidates previous links.
+
+Invitations expire after 24 hours by default and can be used once. The token travels in a URL fragment and a POST body, is removed from history after reading, and is never saved to browser storage. Expired, used, and invalid links show a recovery message. Invitations cannot reset already activated accounts.
+
+Apply the backend migration with `alembic upgrade head` before restarting API and worker (run_backend.py applies it automatically). No services need to be started by the code checks; the isolated backend invitation tests mock database/provider access. No real email or Playwright is used by those tests.
+
+## Editing staff emails and deleting accounts
+
+In **User management → Edit**, the email field is editable. A changed address keeps the existing password and signs out sessions; pending accounts receive a replacement invitation and old links stop working.
+
+The **Delete** action opens a confirmation with a replacement-owner choice and affected-work counts. The removed user can no longer sign in; products, relationships, open follow-ups and drafts move to the selected owner. Draft senders/signatures must be reviewed again. Contacts, clients and historical attribution remain. The old email may be used for a new invitation, with a new account ID. Your own account and the last active Super Admin cannot be deleted. Apply the backend migration before using these controls (`run_backend.py` does this on startup).
+
+## Embedded images when sending through Brevo
+
+If a signature or message contains an uploaded embedded image, use **Prepare images for Brevo** in Compose or the launch confirmation. The dialog detects the files and lets you download each image. Upload it to Brevo's Content library or your website, then paste its direct public HTTPS image link. Saving replaces image sources while keeping typography, tables, dimensions and text, updates the saved signature, and saves the current draft. Previously submitted campaign snapshots keep their original content. Review the preview and confirm launch again afterward.
+
+This step requires hosting the image: a local development server cannot provide a public HTTPS image address to email recipients. The CRM does not upload images to a third party automatically. A URL format check does not confirm remote availability; use a publicly accessible direct image link rather than a private/shared page. See [Brevo Content library instructions](https://help.brevo.com/hc/en-us/articles/4504463584786-Add-and-manage-images-in-the-Content-library).

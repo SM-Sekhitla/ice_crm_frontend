@@ -13,6 +13,7 @@ import {
   createRoute,
   createRouter,
   RouterProvider,
+  useRouterState,
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -28,6 +29,8 @@ import {
 } from "../services/http";
 import { useUI } from "../store/ui";
 import { Shell } from "../components/layout/Shell";
+import { ActivateAccount } from "../features/auth/ActivateAccount";
+import { WelcomeTour } from "../features/onboarding/WelcomeTour";
 import { Login } from "../features/auth/Login";
 const Dashboard = lazy(() =>
   import("../features/dashboard/Dashboard").then((module) => ({
@@ -63,6 +66,10 @@ import {
 } from "../features/settings/Settings";
 import { Button } from "../components/ui/primitives";
 function Workspace() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const activating = pathname.replace(/\/$/, "") === "/activate";
   const userId = useUI((s) => s.userId);
   const client = useQueryClient();
   const [restoring, setRestoring] = useState(true);
@@ -84,9 +91,10 @@ function Workspace() {
       client.clear();
       useUI.getState().logout();
     });
-    void restore();
+    if (activating) setRestoring(false);
+    else void restore();
     return unsubscribe;
-  }, [client, restore]);
+  }, [client, restore, activating]);
   const [addOpen, setAddOpen] = useState(false);
   const [contactId, setContactId] = useState<string | null>(null);
   const {
@@ -97,7 +105,7 @@ function Workspace() {
   } = useQuery({
     queryKey: ["database", userId],
     queryFn: () => api.getDatabase(userId!),
-    enabled: !!userId && !restoring,
+    enabled: !!userId && !restoring && !activating,
     retry: (attempt, error) =>
       !(error instanceof ApiError && error.status < 500) && attempt < 1,
     refetchInterval: 15000,
@@ -110,6 +118,7 @@ function Workspace() {
     setAddOpen(false);
     setContactId(null);
   }, [userId]);
+  if (activating) return <ActivateAccount />;
   if (restoring)
     return <div className="workspace-loader">Restoring your session…</div>;
   if (sessionError)
@@ -170,6 +179,7 @@ function Workspace() {
           <Outlet />
         </Suspense>
       </Shell>
+      {user.onboardingCompleted === false && <WelcomeTour key={user.id} />}
       {addOpen && <ContactForm open setOpen={setAddOpen} />}
       <ContactDetail
         key={contactId ?? "closed"}
@@ -189,6 +199,11 @@ const root = createRootRoute({
   ),
 });
 const routes = [
+  createRoute({
+    getParentRoute: () => root,
+    path: "/activate",
+    component: () => null,
+  }),
   createRoute({ getParentRoute: () => root, path: "/", component: Dashboard }),
   createRoute({
     getParentRoute: () => root,

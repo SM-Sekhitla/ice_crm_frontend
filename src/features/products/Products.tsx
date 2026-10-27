@@ -91,7 +91,7 @@ export function Products() {
               onClick={() => setEditor({ mode: "create" })}
             >
               <Plus size={17} />
-              Create product
+              Add Product
             </Button>
           )
         }
@@ -331,7 +331,7 @@ export function Products() {
                   onClick={() => setEditor({ mode: "create" })}
                 >
                   <Plus size={15} />
-                  Create product
+                  Add Product
                 </Button>
               ) : undefined
             }

@@ -84,11 +84,11 @@ describe("frontend backend contracts", () => {
     expect(body).not.toHaveProperty("attachments");
     await api.submitCampaign(
       "campaign",
-      { mode: "now", delivery: "smtp", confirmed: true },
+      { mode: "now", delivery: "email", confirmed: true },
       "unused-actor",
     );
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
-      mode: "smtp",
+      mode: "email",
       confirm: true,
       scheduledAt: null,
     });
@@ -105,4 +105,23 @@ describe("frontend backend contracts", () => {
       status: "Completed",
     });
   });
+});
+
+it("updates a saved signature through the authenticated backend route", async () => {
+  fetchMock.mockResolvedValueOnce(
+    success({
+      id: "signature",
+      html: '<img src="https://cdn.example.com/image.png">',
+    }),
+  );
+  const { api } = await import("./api");
+  const input = {
+    name: "Personal",
+    sourceFileName: "signature.html",
+    html: '<img src="https://cdn.example.com/image.png">',
+  };
+  await api.updateSignature("signature", input);
+  expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/signatures/signature");
+  expect(fetchMock.mock.calls[0][1].method).toBe("PUT");
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(input);
 });

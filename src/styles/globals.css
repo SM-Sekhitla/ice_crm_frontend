@@ -6590,3 +6590,195 @@ button.portfolio-symbol:hover {
     padding: 14px;
   }
 }
+
+.activation-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 28px 18px;
+  background: radial-gradient(
+    ellipse at top left,
+    #50121e 0,
+    #151216 45%,
+    #09090b 100%
+  );
+}
+.activation-card {
+  width: min(100%, 440px);
+  background: #fff;
+  border-radius: 16px;
+  padding: 38px;
+  box-shadow: 0 24px 80px #0005;
+}
+.activation-brand {
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -0.05em;
+  color: #c1121f;
+  margin-bottom: 32px;
+}
+.activation-brand span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #746b72;
+  margin-top: 3px;
+}
+.activation-icon {
+  color: #c1121f;
+  background: #fff1f2;
+  display: inline-flex;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+.activation-card h1 {
+  font-size: 26px;
+  letter-spacing: -0.04em;
+  margin-bottom: 10px;
+}
+.activation-card > p {
+  color: #756c72;
+  line-height: 1.65;
+  margin-bottom: 24px;
+}
+.activation-card form {
+  display: grid;
+  gap: 18px;
+}
+.activation-card label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 550;
+}
+.activation-card form > .button {
+  width: 100%;
+  justify-content: center;
+  margin-top: 5px;
+}
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: #0b0b0d80;
+}
+.onboarding-highlight {
+  position: fixed;
+  z-index: 81;
+  pointer-events: none;
+  border: 2px solid #f4b942;
+  border-radius: 8px;
+  box-shadow: 0 0 0 4px #f4b94226;
+}
+.onboarding-card {
+  position: fixed;
+  z-index: 82;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(380px, calc(100vw - 32px));
+  padding: 26px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 70px #0004;
+}
+.onboarding-card.onboarding-anchored {
+  transform: none;
+}
+.onboarding-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #aa1b2a;
+  font-weight: 650;
+}
+.onboarding-card h2 {
+  font-size: 22px;
+  letter-spacing: -0.035em;
+  margin: 18px 0 10px;
+}
+.onboarding-card > p {
+  font-size: 13px;
+  color: #756c72;
+  line-height: 1.7;
+}
+.onboarding-progress {
+  display: flex;
+  gap: 4px;
+  margin: 22px 0;
+}
+.onboarding-progress span {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: #eee8eb;
+}
+.onboarding-progress .visited {
+  background: #c1121f;
+}
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.onboarding-actions .button:first-child {
+  margin-right: auto;
+}
+@media (max-width: 500px) {
+  .activation-card {
+    padding: 28px 24px;
+  }
+}
+
+.brevo-image-instructions {
+  padding-left: 20px;
+  color: #6f626a;
+  font-size: 12px;
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+.brevo-image-item {
+  display: grid;
+  gap: 15px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 18px;
+}
+.brevo-image-summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.brevo-image-summary > img {
+  max-width: 150px;
+  max-height: 90px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.brevo-image-summary > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.brevo-image-summary strong {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.brevo-image-summary small {
+  color: var(--muted);
+}
+.brevo-image-item label {
+  display: grid;
+  gap: 8px;
+}
+@media (max-width: 500px) {
+  .brevo-image-summary {
+    flex-wrap: wrap;
+  }
+}

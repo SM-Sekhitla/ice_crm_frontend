@@ -136,7 +136,7 @@ export function CampaignDetail({
           <ShieldCheck size={14} />
           {c.mode === "simulation"
             ? "Server simulation · no email sent"
-            : "SMTP delivery"}
+            : `${db.emailProvider.toUpperCase()} delivery`}
         </span>
         {c.status === "Scheduled" && (
           <span>
@@ -174,7 +174,7 @@ export function CampaignDetail({
                     label:
                       c.mode === "simulation"
                         ? "Simulated messages"
-                        : "SMTP accepted",
+                        : "Provider accepted",
                     count:
                       c.mode === "simulation"
                         ? counts.simulated
@@ -453,8 +453,8 @@ export function CampaignDetail({
               )}
               <div className="callout">
                 Delivery rate, open rate, click rate, and unsubscribe counts are
-                unavailable without provider tracking. SMTP acceptance does not
-                confirm inbox delivery.
+                unavailable without provider tracking. Provider acceptance does
+                not confirm inbox delivery.
               </div>
             </>
           )}

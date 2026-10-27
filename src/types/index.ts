@@ -40,6 +40,13 @@ export interface User {
   role: "Super Admin" | "BDO";
   productIds: string[];
   active?: boolean;
+  deletedAt?: string | null;
+  passwordSet?: boolean;
+  onboardingCompleted?: boolean;
+  invitationStatus?:
+    "Queued" | "Dispatching" | "Accepted" | "Failed" | "Unknown" | "Cancelled";
+  invitationReason?: string;
+  invitationExpiresAt?: string;
 }
 export interface Product {
   id: string;
@@ -125,6 +132,10 @@ export interface FollowUp {
 }
 export interface Database {
   version: number;
+  emailProvider: "smtp" | "brevo";
+  emailDeliveryEnabled: boolean;
+  brevoFromEmail: string;
+  brevoFromName: string;
   users: User[];
   products: Product[];
   contacts: Contact[];

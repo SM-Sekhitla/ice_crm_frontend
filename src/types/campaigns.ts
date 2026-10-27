@@ -50,7 +50,7 @@ export interface Campaign extends CampaignInput {
   createdBy: string;
   scheduledAt: string | null;
   sentAt: string | null;
-  mode: "smtp" | "simulation";
+  mode: "email" | "smtp" | "simulation";
   signatureHtml: string;
 }
 export interface CampaignRecipient {

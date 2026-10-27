@@ -208,6 +208,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   <Tip label={item.title} key={item.path}>
                     <Link
                       to={item.path}
+                      data-tour={item.path}
                       className={`nav-item ${path === item.path ? "active" : ""}`}
                     >
                       <item.icon size={18} />
@@ -371,6 +372,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <button
               className="avatar-button"
               aria-label="My profile"
+              data-tour="/profile"
               onClick={() => navigate({ to: "/profile" })}
             >
               <Avatar name={`${user.firstName} ${user.lastName}`} small />

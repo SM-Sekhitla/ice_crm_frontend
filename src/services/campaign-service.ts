@@ -11,6 +11,10 @@ export const campaignMethods = {
     return (await request<{ id: string }>("/signatures", json("POST", input)))
       .id;
   },
+  updateSignature: (
+    id: string,
+    input: { name: string; html: string; sourceFileName: string },
+  ) => request(`/signatures/${path(id)}`, json("PUT", input)),
   deleteSignature: (id: string, _userId: string) =>
     request<void>(`/signatures/${path(id)}`, json("DELETE")),
   saveAudienceSegment: (
@@ -44,7 +48,7 @@ export const campaignMethods = {
     id: string,
     options: {
       mode: "now" | "schedule";
-      delivery: "smtp" | "simulation";
+      delivery: "email" | "simulation";
       scheduledAt?: string;
       confirmed: boolean;
     },

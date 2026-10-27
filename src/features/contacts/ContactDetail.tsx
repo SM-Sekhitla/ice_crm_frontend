@@ -274,7 +274,7 @@ export function ContactDetail({
               {tab === "Emails" && (
                 <>
                   <p className="form-hint">
-                    Campaign processing history. SMTP acceptance does not
+                    Campaign processing history. Provider acceptance does not
                     indicate real email delivery.
                   </p>
                   {db.campaignRecipients

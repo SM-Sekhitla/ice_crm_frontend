@@ -1,3 +1,5 @@
+import { BrevoImagePreparation } from "./BrevoImagePreparation";
+import { embeddedEmailImages } from "../../lib/email-images";
 import { SignatureManager } from "../signatures/SignatureManager";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useBlocker } from "@tanstack/react-router";
@@ -82,6 +84,7 @@ export function CampaignWizard({
   const [error, setError] = useState("");
   const [discard, setDiscard] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [prepareImages, setPrepareImages] = useState(false);
   const [ack, setAck] = useState(false);
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState("");
@@ -92,7 +95,9 @@ export function CampaignWizard({
   const [mobile, setMobile] = useState(false);
   const [test, setTest] = useState(false);
   const [mode, setMode] = useState<"now" | "schedule">("now");
-  const [delivery, setDelivery] = useState<"smtp" | "simulation">("smtp");
+  const [delivery, setDelivery] = useState<"email" | "simulation">(
+    db.emailDeliveryEnabled ? "email" : "simulation",
+  );
   const [scheduled, setScheduled] = useState("");
   const [signatureManager, setSignatureManager] = useState(false);
   const [segmentModal, setSegmentModal] = useState(false);
@@ -126,6 +131,18 @@ export function CampaignWizard({
   const senders = allowedSenders(db, campaignOwner, draft.productId);
   const sender = senders.find((s) => s.id === draft.senderId);
   const signature = db.signatures.find((s) => s.id === draft.signatureId);
+  const embeddedImages = useMemo(
+    () =>
+      embeddedEmailImages({
+        Message: draft.bodyHtml,
+        Signature: signature?.html ?? "",
+      }),
+    [draft.bodyHtml, signature?.html],
+  );
+  const brevoImagesBlocked =
+    db.emailProvider === "brevo" &&
+    delivery === "email" &&
+    embeddedImages.length > 0;
   const person =
     rows.find((r) => r.contact.id === previewId)?.contact ??
     eligible[0]?.contact ??
@@ -625,6 +642,39 @@ export function CampaignWizard({
                     </select>
                   </label>
                 </div>
+                {!senders.length && (
+                  <div className="callout">
+                    No verified sender is assigned to this product
+                    {campaignOwner.role === "BDO" ? " and campaign owner" : ""}.
+                    Assign the product under Email configurations
+                    {campaignOwner.role === "BDO"
+                      ? " and authorise this BDO"
+                      : ""}
+                    .
+                    {can(user, "email_config.manage") && (
+                      <>
+                        {" "}
+                        <a
+                          href="/email-configurations"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Open email configurations
+                        </a>
+                      </>
+                    )}
+                  </div>
+                )}
+                {db.emailProvider === "brevo" && embeddedImages.length > 0 && (
+                  <div className="callout">
+                    Your message or signature contains {embeddedImages.length}{" "}
+                    embedded image{embeddedImages.length === 1 ? "" : "s"}.
+                    Brevo delivery needs public image links.{" "}
+                    <Button onClick={() => setPrepareImages(true)}>
+                      Prepare images for Brevo
+                    </Button>
+                  </div>
+                )}
                 <div className="campaign-signature-actions">
                   <Button
                     disabled={campaignOwner.id !== user.id}
@@ -814,7 +864,7 @@ export function CampaignWizard({
                   </label>
                 )}
                 <div className="callout">
-                  Each recipient gets a separate personalised message. SMTP
+                  Each recipient gets a separate personalised message. Provider
                   acceptance is recorded; inbox delivery, opens, and clicks
                   require provider tracking.
                 </div>
@@ -946,22 +996,38 @@ export function CampaignWizard({
             : "Confirm scheduled campaign"
         }
         description={
-          delivery === "smtp"
-            ? "Confirm recipients and content before sending through SMTP."
+          delivery === "email"
+            ? `Confirm recipients and content before sending through ${db.emailProvider.toUpperCase()}.`
             : "Server simulation only. No real email will be sent."
         }
       >
         <div className="form-body">
+          {!db.emailDeliveryEnabled && (
+            <p className="callout">
+              Real email delivery is disabled on the server. Configure{" "}
+              {db.emailProvider.toUpperCase()} and enable EMAIL_DELIVERY_ENABLED
+              before sending.
+            </p>
+          )}
+          {db.emailProvider === "brevo" && (
+            <p className="form-hint">
+              Brevo sends from {sender?.senderName ?? "the selected sender"} (
+              {sender?.email ?? "select a sender"}). Use HTTPS image URLs;
+              embedded signature images require SMTP.
+            </p>
+          )}
           <label>
             Delivery mode
             <select
               value={delivery}
               onChange={(event) => {
-                setDelivery(event.target.value as "smtp" | "simulation");
+                setDelivery(event.target.value as "email" | "simulation");
                 setAck(false);
               }}
             >
-              <option value="smtp">Send email via SMTP</option>
+              <option value="email" disabled={!db.emailDeliveryEnabled}>
+                Send email via {db.emailProvider.toUpperCase()}
+              </option>
               <option value="simulation">
                 Server simulation — no email sent
               </option>
@@ -983,6 +1049,21 @@ export function CampaignWizard({
               <span>{scheduled.replace("T", " at ")} SAST</span>
             )}
           </div>
+          {brevoImagesBlocked && (
+            <div className="callout">
+              Prepare {embeddedImages.length} embedded image
+              {embeddedImages.length === 1 ? "" : "s"} before sending. Your
+              layout will stay the same.{" "}
+              <Button
+                onClick={() => {
+                  setConfirm(false);
+                  setPrepareImages(true);
+                }}
+              >
+                Prepare images for Brevo
+              </Button>
+            </div>
+          )}
           <label className="checkbox-label">
             <input
               type="checkbox"
@@ -990,7 +1071,7 @@ export function CampaignWizard({
               onChange={(e) => setAck(e.target.checked)}
             />
             <span>
-              {delivery === "smtp"
+              {delivery === "email"
                 ? "I authorise sending this campaign to the selected recipients."
                 : "I confirm this server simulation will send no real email."}
             </span>
@@ -1007,7 +1088,7 @@ export function CampaignWizard({
           </Button>
           <Button
             variant="primary"
-            disabled={!ack}
+            disabled={!ack || brevoImagesBlocked}
             loading={busy}
             onClick={async () => {
               try {
@@ -1093,6 +1174,36 @@ export function CampaignWizard({
           </div>
         </form>
       </Modal>
+      {prepareImages && (
+        <BrevoImagePreparation
+          bodyHtml={draft.bodyHtml}
+          signatureHtml={signature?.html ?? ""}
+          onClose={() => setPrepareImages(false)}
+          onApply={async (bodyHtml, signatureHtml) => {
+            if (signature && signatureHtml !== signature.html)
+              await api.updateSignature(signature.id, {
+                name: signature.name,
+                html: signatureHtml,
+                sourceFileName: signature.sourceFileName ?? "",
+              });
+            const updatedDraft = { ...draft, bodyHtml };
+            const campaignId = await api.saveCampaign(
+              updatedDraft,
+              user.id,
+              id,
+            );
+            setDraft(updatedDraft);
+            setId(campaignId);
+            setBaseline(JSON.stringify(updatedDraft));
+            setAck(false);
+            setError("");
+            await refresh();
+            toast.success(
+              "Image links saved. Review your preview, then launch the campaign.",
+            );
+          }}
+        />
+      )}
       {signatureManager && (
         <SignatureManager
           onClose={() => setSignatureManager(false)}

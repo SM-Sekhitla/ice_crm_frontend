@@ -73,7 +73,7 @@ export function ProductForm({
       <Modal
         open
         onOpenChange={(open) => !open && requestClose()}
-        title={product ? "Edit product" : "Create a product"}
+        title={product ? "Edit product" : "Add Product"}
         description={
           product
             ? "Keep your portfolio details up to date."
@@ -282,7 +282,7 @@ export function ProductForm({
             </Button>
             <Button type="submit" variant="primary" loading={isSubmitting}>
               {product ? <Save size={15} /> : <ArrowRight size={15} />}
-              {product ? "Save changes" : "Create product"}
+              {product ? "Save changes" : "Add Product"}
             </Button>
           </div>
         </form>

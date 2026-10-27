@@ -164,3 +164,24 @@ export const json = (method: string, body?: unknown): RequestInit => ({
   method,
   ...(body === undefined ? {} : { body: JSON.stringify(body) }),
 });
+
+export async function verifyInvitation(token: string) {
+  return decode<{ valid: boolean }>(
+    await send("/auth/invitations/verify", json("POST", { token })),
+  );
+}
+export async function activateAccount(
+  token: string,
+  password: string,
+  confirmPassword: string,
+) {
+  const result = await decode<AuthResponse>(
+    await send(
+      "/auth/invitations/accept",
+      json("POST", { token, password, confirmPassword }),
+    ),
+  );
+  clearSession();
+  saveSession(result);
+  return result.user;
+}

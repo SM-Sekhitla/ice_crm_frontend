@@ -152,3 +152,70 @@ describe("real API session transport", () => {
     expect(storage.size).toBe(0);
   });
 });
+
+it("verifies an invitation without putting its token in the URL or sending session credentials", async () => {
+  fetchMock.mockResolvedValueOnce(response({ valid: true }));
+  const http = await import("./http");
+  const token = "one-time-invitation-token";
+  await expect(http.verifyInvitation(token)).resolves.toEqual({ valid: true });
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    "http://crm.test/api/v1/auth/invitations/verify",
+  );
+  expect(fetchMock.mock.calls[0][0]).not.toContain(token);
+  expect(fetchMock.mock.calls[0][1].headers.get("Authorization")).toBeNull();
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ token });
+});
+
+it("adopts the invited user's session and clears the previous workspace after activation", async () => {
+  const invitedUser = {
+    ...user,
+    id: "invited-user",
+    onboardingCompleted: false,
+  };
+  fetchMock
+    .mockResolvedValueOnce(response(tokens()))
+    .mockResolvedValueOnce(
+      response({
+        accessToken: "invited-access",
+        refreshToken: "invited-refresh",
+        user: invitedUser,
+      }),
+    )
+    .mockResolvedValueOnce(response({ ok: true }));
+  const http = await import("./http");
+  await http.signIn(user.email, "password");
+  const clearPreviousWorkspace = vi.fn();
+  http.onSessionExpired(clearPreviousWorkspace);
+  await expect(
+    http.activateAccount(
+      "invitation-token",
+      "NewPassword2026!",
+      "NewPassword2026!",
+    ),
+  ).resolves.toEqual(invitedUser);
+  expect(clearPreviousWorkspace).toHaveBeenCalledOnce();
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+    token: "invitation-token",
+    password: "NewPassword2026!",
+    confirmPassword: "NewPassword2026!",
+  });
+  expect(fetchMock.mock.calls[1][1].headers.get("Authorization")).toBeNull();
+  await http.request("/workspace");
+  expect(fetchMock.mock.calls[2][1].headers.get("Authorization")).toBe(
+    "Bearer invited-access",
+  );
+  expect([...storage.entries()]).toEqual([
+    ["ice-crm-refresh-token", "invited-refresh"],
+  ]);
+});
+
+it("rejects used or expired invitations without creating a session", async () => {
+  fetchMock.mockResolvedValueOnce(
+    response({ detail: "Invitation expired" }, 400),
+  );
+  const http = await import("./http");
+  await expect(
+    http.activateAccount("old-token", "NewPassword2026!", "NewPassword2026!"),
+  ).rejects.toMatchObject({ status: 400 });
+  expect(storage.size).toBe(0);
+});

@@ -10,6 +10,7 @@ import {
   Modal,
   PageHeader,
 } from "../../components/ui/primitives";
+import { deleteUserAccount, updateUser } from "../../services/user-management";
 import { can } from "../../lib/permissions";
 import { clearSession, json, request } from "../../services/http";
 import type { User } from "../../types";
@@ -203,6 +204,9 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
   >(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState<User | null>(null);
+  const [replacement, setReplacement] = useState(user.id);
+  const [deleteError, setDeleteError] = useState("");
   const permission = type === "users" ? "users.manage" : "email_config.manage";
   if (!can(user, permission))
     return (
@@ -228,24 +232,18 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
     try {
       if (isUser) {
         const fields = {
-          firstName: data.get("firstName"),
-          lastName: data.get("lastName"),
-          role: data.get("role"),
+          firstName: String(data.get("firstName")),
+          lastName: String(data.get("lastName")),
+          email: String(data.get("email")),
+          role: String(data.get("role")) as User["role"],
           productIds,
         };
-        await request(
-          staff ? `/users/${staff.id}` : "/users",
-          json(
-            staff ? "PUT" : "POST",
-            staff
-              ? { ...fields, active: data.get("active") === "on" }
-              : {
-                  ...fields,
-                  email: data.get("email"),
-                  password: data.get("password"),
-                },
-          ),
-        );
+        if (staff)
+          await updateUser(staff.id, {
+            ...fields,
+            active: data.get("active") === "on",
+          });
+        else await request("/users", json("POST", fields));
       } else {
         await request(
           sender ? `/senders/${sender.id}` : "/senders",
@@ -262,7 +260,13 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
       }
       setEditing(null);
       await refresh();
-      toast.success(isUser ? "Account saved" : "Sender saved");
+      toast.success(
+        isUser
+          ? staff
+            ? "Account saved"
+            : "Invitation queued for email delivery"
+          : "Sender saved",
+      );
     } catch (error) {
       setError((error as Error).message);
     } finally {
@@ -277,7 +281,7 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
         description={
           isUser
             ? "Manage team accounts, roles, and product access."
-            : "Authorised sender identities for campaign delivery."
+            : "Authorised sender identities for SMTP or Brevo delivery."
         }
         actions={
           <Button variant="primary" onClick={() => open("new")}>
@@ -287,8 +291,11 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
       />
       {!isUser && (
         <div className="callout">
-          Your server administrator configures the SMTP connection. Add only
-          sender addresses authorised by your email provider.
+          The server uses {db.emailProvider.toUpperCase()}. Real delivery is{" "}
+          {db.emailDeliveryEnabled ? "enabled" : "disabled"}. Add only addresses
+          authorised by your provider.
+          {db.emailProvider === "brevo" &&
+            ` Campaigns use the sender you select. The default invitation sender is ${db.brevoFromEmail || "not configured"}.`}
         </div>
       )}
       <section className="panel table-scroll">
@@ -305,28 +312,95 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
               </tr>
             </thead>
             <tbody>
-              {db.users.map((member) => (
-                <tr key={member.id}>
-                  <td>
-                    {member.firstName} {member.lastName}
-                  </td>
-                  <td>{member.email}</td>
-                  <td>{member.role}</td>
-                  <td>
-                    {member.role === "Super Admin"
-                      ? "All products"
-                      : member.productIds.length}
-                  </td>
-                  <td>
-                    <Badge tone={member.active === false ? "neutral" : "green"}>
-                      {member.active === false ? "Inactive" : "Active"}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Button onClick={() => open(member)}>Edit</Button>
-                  </td>
-                </tr>
-              ))}
+              {db.users
+                .filter((member) => !member.deletedAt)
+                .map((member) => (
+                  <tr key={member.id}>
+                    <td>
+                      {member.firstName} {member.lastName}
+                    </td>
+                    <td>{member.email}</td>
+                    <td>{member.role}</td>
+                    <td>
+                      {member.role === "Super Admin"
+                        ? "All products"
+                        : member.productIds.length}
+                    </td>
+                    <td>
+                      <Badge
+                        tone={
+                          member.active === false
+                            ? "neutral"
+                            : member.passwordSet === false
+                              ? "amber"
+                              : "green"
+                        }
+                      >
+                        {member.active === false
+                          ? "Inactive"
+                          : member.passwordSet === false
+                            ? "Invitation pending"
+                            : "Active"}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button onClick={() => open(member)}>Edit</Button>
+                      <Button
+                        variant="danger"
+                        disabled={busy || member.id === user.id}
+                        title={
+                          member.id === user.id
+                            ? "You cannot delete your own account"
+                            : "Delete user account"
+                        }
+                        onClick={() => {
+                          setDeleting(member);
+                          setReplacement(user.id);
+                          setDeleteError("");
+                        }}
+                      >
+                        Delete
+                      </Button>
+                      {member.active !== false &&
+                        member.passwordSet === false && (
+                          <Button
+                            disabled={busy}
+                            onClick={async () => {
+                              setBusy(true);
+                              try {
+                                await request(
+                                  `/users/${member.id}/invitation`,
+                                  json("POST"),
+                                );
+                                await refresh();
+                                toast.success(
+                                  "New invitation queued. Previous links are now invalid.",
+                                );
+                              } catch (error) {
+                                toast.error((error as Error).message);
+                              } finally {
+                                setBusy(false);
+                              }
+                            }}
+                          >
+                            Resend invitation
+                          </Button>
+                        )}
+                      {member.passwordSet === false && (
+                        <small title={member.invitationReason}>
+                          {member.invitationStatus === "Accepted"
+                            ? "Invitation email accepted by provider"
+                            : (member.invitationStatus ??
+                              "Awaiting invitation")}
+                          {member.invitationExpiresAt &&
+                          Date.parse(member.invitationExpiresAt) < Date.now()
+                            ? " · expired"
+                            : ""}
+                        </small>
+                      )}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         ) : (
@@ -371,6 +445,118 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
         )}
       </section>
       <Modal
+        open={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open && !busy) setDeleting(null);
+        }}
+        title={`Delete ${deleting?.firstName ?? "user"} ${deleting?.lastName ?? ""}?`}
+        description="This removes the login account and revokes sessions and invitation links. CRM records and historical attribution are retained."
+      >
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (!deleting) return;
+            setBusy(true);
+            setDeleteError("");
+            try {
+              await deleteUserAccount(deleting.id, replacement);
+              setDeleting(null);
+              await refresh();
+              toast.success("User account deleted and work reassigned");
+            } catch (error) {
+              setDeleteError((error as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <div className="form-body">
+            <p>
+              <strong>{deleting?.email}</strong> will no longer be able to sign
+              in. The deleted account cannot be restored from this screen.
+            </p>
+            <label>
+              Reassign their work to
+              <select
+                required
+                value={replacement}
+                onChange={(event) => setReplacement(event.target.value)}
+                disabled={busy}
+              >
+                {db.users
+                  .filter(
+                    (member) =>
+                      member.id !== deleting?.id &&
+                      !member.deletedAt &&
+                      member.active !== false &&
+                      member.passwordSet !== false,
+                  )
+                  .map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.firstName} {member.lastName} · {member.role}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <p className="form-hint">
+              Owned products, contact relationships, open follow-ups and draft
+              campaigns are reassigned. The replacement needs access to every
+              affected product; a Super Admin can take over all of them.
+            </p>
+            {deleting && (
+              <div className="callout">
+                {
+                  db.products.filter((item) => item.ownerId === deleting.id)
+                    .length
+                }{" "}
+                products ·{" "}
+                {
+                  db.associations.filter((item) => item.ownerId === deleting.id)
+                    .length
+                }{" "}
+                relationships ·{" "}
+                {
+                  db.followUps.filter(
+                    (item) =>
+                      item.ownerId === deleting.id && item.status === "Open",
+                  ).length
+                }{" "}
+                open follow-ups ·{" "}
+                {
+                  db.campaigns.filter(
+                    (item) =>
+                      item.createdBy === deleting.id && item.status === "Draft",
+                  ).length
+                }{" "}
+                drafts
+              </div>
+            )}
+            <p className="form-hint">
+              Their remaining queued campaigns are cancelled. Messages already
+              being sent may finish. Contacts, clients, completed work and audit
+              history are kept.
+            </p>
+            {deleteError && (
+              <p className="field-error" role="alert">
+                {deleteError}
+              </p>
+            )}
+          </div>
+          <div className="modal-footer">
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() => setDeleting(null)}
+            >
+              Keep user
+            </Button>
+            <Button type="submit" variant="danger" loading={busy}>
+              Delete user
+            </Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal
         open={editing !== null}
         onOpenChange={(value) => {
           if (!value && !busy) open(null);
@@ -406,22 +592,21 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                       name="email"
                       type="email"
                       required
-                      disabled={!!staff}
                       defaultValue={staff?.email}
                     />
                   </label>
+                  {staff && (
+                    <p className="form-hint">
+                      Changing an email signs out existing sessions. Pending
+                      accounts receive a new invitation at the corrected
+                      address.
+                    </p>
+                  )}
                   {!staff && (
-                    <label>
-                      Initial password
-                      <input
-                        name="password"
-                        type="password"
-                        autoComplete="new-password"
-                        minLength={12}
-                        maxLength={128}
-                        required
-                      />
-                    </label>
+                    <p className="form-hint">
+                      We’ll email a one-time invitation. Your colleague will
+                      choose their own password.
+                    </p>
                   )}
                   <label>
                     Role
@@ -458,7 +643,10 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                       name="senderName"
                       required
                       maxLength={150}
-                      defaultValue={sender?.senderName}
+                      defaultValue={
+                        sender?.senderName ??
+                        (db.emailProvider === "brevo" ? db.brevoFromName : "")
+                      }
                     />
                   </label>
                   <label>
@@ -467,7 +655,10 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                       type="email"
                       name="email"
                       required
-                      defaultValue={sender?.email}
+                      defaultValue={
+                        sender?.email ??
+                        (db.emailProvider === "brevo" ? db.brevoFromEmail : "")
+                      }
                     />
                   </label>
                   <label>
@@ -527,7 +718,8 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                     type="checkbox"
                     defaultChecked={sender?.status === "Verified"}
                   />
-                  I have authorised this sender address with the SMTP provider.
+                  I have authorised this sender address with the configured
+                  provider.
                 </label>
               </>
             )}

@@ -167,7 +167,7 @@ export function Campaigns() {
                 count: real.filter((c) => c.status === "Sent").length,
               },
               {
-                label: "SMTP accepted",
+                label: "Provider accepted",
                 count: logs.filter((r) => r.status === "Accepted").length,
               },
             ].map((m) => (
