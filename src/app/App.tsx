@@ -64,6 +64,7 @@ import {
   Profile,
   Settings,
 } from "../features/settings/Settings";
+import { BackendLogs } from "../features/settings/BackendLogs";
 import { Button } from "../components/ui/primitives";
 function Workspace() {
   const pathname = useRouterState({
@@ -199,6 +200,11 @@ const root = createRootRoute({
   ),
 });
 const routes = [
+  createRoute({
+    getParentRoute: () => root,
+    path: "/backend-logs",
+    component: BackendLogs,
+  }),
   createRoute({
     getParentRoute: () => root,
     path: "/activate",

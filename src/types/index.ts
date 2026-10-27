@@ -31,7 +31,8 @@ export type Permission =
   | "campaigns.manage"
   | "campaigns.send"
   | "users.manage"
-  | "email_config.manage";
+  | "email_config.manage"
+  | "logs.view";
 export interface User {
   id: string;
   firstName: string;

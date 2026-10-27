@@ -7113,3 +7113,179 @@ button.portfolio-symbol:hover {
     padding: 18px 20px;
   }
 }
+
+.backend-logs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+.backend-logs-search {
+  position: relative;
+  flex: 1 1 260px;
+}
+.backend-logs-search > svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--muted);
+}
+.backend-logs-search input {
+  padding-left: 37px;
+  width: 100%;
+}
+.backend-logs-toolbar select {
+  width: auto;
+  min-width: 140px;
+}
+.backend-logs-live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.backend-logs-live input {
+  width: 15px;
+  height: 15px;
+}
+.backend-logs-caption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 18px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.backend-logs-table td {
+  vertical-align: top;
+}
+.backend-logs-table time {
+  font-size: 11px;
+  color: var(--muted);
+}
+.backend-log-event {
+  white-space: normal;
+  min-width: 250px;
+}
+.backend-log-event strong,
+.backend-log-event code,
+.backend-log-event small,
+.backend-log-event > span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.backend-log-event strong {
+  font-size: 12px;
+  font-weight: 550;
+}
+.backend-log-event code {
+  font-size: 11px;
+  margin-top: 6px;
+  color: var(--ink);
+}
+.backend-log-event small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+  margin-top: 4px;
+}
+.backend-logs-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 11px;
+}
+.backend-logs-footer > div {
+  display: flex;
+  gap: 8px;
+}
+.backend-logs-state {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+.backend-logs-state p {
+  margin: 12px 0 20px;
+}
+.backend-logs-note {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+@media (max-width: 520px) {
+  .backend-logs-toolbar select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.backend-logs-module-filter {
+  flex: 1 1 180px;
+  width: auto;
+}
+.backend-log-module {
+  min-width: 160px;
+  max-width: 240px;
+  white-space: normal;
+}
+.backend-log-module strong {
+  font-size: 11px;
+  font-weight: 550;
+}
+.backend-log-module code {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.backend-log-details-heading {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.backend-log-details-heading time {
+  font-size: 11px;
+  color: var(--muted);
+}
+.backend-log-details dl {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  font-size: 12px;
+}
+.backend-log-details dt {
+  color: var(--muted);
+}
+.backend-log-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.backend-log-details h3 {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.backend-log-details pre {
+  margin: 0;
+  padding: 14px;
+  background: #f7f6f5;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  line-height: 1.8;
+  max-height: 320px;
+  overflow: auto;
+}

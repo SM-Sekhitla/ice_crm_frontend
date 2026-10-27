@@ -12,6 +12,7 @@ import {
   CircleHelp,
   ContactRound,
   LayoutDashboard,
+  FileText,
   LogOut,
   Mail,
   Menu,
@@ -54,6 +55,7 @@ const groups = [
     label: "ADMINISTRATION",
     items: [
       { title: "User management", path: "/users", icon: Users },
+      { title: "Backend logs", path: "/backend-logs", icon: FileText },
       {
         title: "Email configurations",
         path: "/email-configurations",
@@ -70,6 +72,7 @@ const names: Record<string, string> = {
   "/products": "Products",
   "/campaigns": "Campaigns",
   "/users": "User management",
+  "/backend-logs": "Backend logs",
   "/email-configurations": "Email configurations",
   "/profile": "My profile",
   "/settings": "Settings",

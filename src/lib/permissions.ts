@@ -11,6 +11,7 @@ const roles: Record<User["role"], Permission[]> = {
     "campaigns.manage",
     "campaigns.send",
     "users.manage",
+    "logs.view",
     "email_config.manage",
   ],
   BDO: [
