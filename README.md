@@ -123,3 +123,41 @@ The **Delete** action opens a confirmation with a replacement-owner choice and a
 If a signature or message contains an uploaded embedded image, use **Prepare images for Brevo** in Compose or the launch confirmation. The dialog detects the files and lets you download each image. Upload it to Brevo's Content library or your website, then paste its direct public HTTPS image link. Saving replaces image sources while keeping typography, tables, dimensions and text, updates the saved signature, and saves the current draft. Previously submitted campaign snapshots keep their original content. Review the preview and confirm launch again afterward.
 
 This step requires hosting the image: a local development server cannot provide a public HTTPS image address to email recipients. The CRM does not upload images to a third party automatically. A URL format check does not confirm remote availability; use a publicly accessible direct image link rather than a private/shared page. See [Brevo Content library instructions](https://help.brevo.com/hc/en-us/articles/4504463584786-Add-and-manage-images-in-the-Content-library).
+
+## Docker: frontend, API, PostgreSQL and email worker
+
+Keep `crm_frontend` and `crm_backend` beside each other. The frontend Compose file starts the full stack, waits for PostgreSQL, applies migrations, then starts the API, worker and Nginx frontend. The browser calls `/api/v1` on the frontend's own origin; Nginx forwards those requests to `api:5002`. Direct links to React routes also work.
+
+Configure `../crm_backend/.env` with your real `SECRET_KEY`, initial administrator settings, email settings, and database settings. The Compose database connection must use `db:5432`, not localhost. For example, replace the placeholders below; URL-encode special characters in the connection-string password:
+
+```env
+POSTGRES_DB=crm_db
+POSTGRES_USER=crm
+POSTGRES_PASSWORD=YOUR_DATABASE_PASSWORD
+DOCKER_DATABASE_URL=postgresql+asyncpg://crm:YOUR_URL_ENCODED_PASSWORD@db:5432/crm_db
+FRONTEND_BASE_URL=http://localhost:5173
+ALLOWED_HOSTS=["localhost","127.0.0.1"]
+```
+
+From `crm_frontend`, run:
+
+```sh
+docker compose --env-file ../crm_backend/.env up --build -d
+docker compose --env-file ../crm_backend/.env logs -f api worker frontend
+```
+
+Open `http://localhost:5173`. Set `FRONTEND_PORT` and `FRONTEND_BASE_URL` together in the backend `.env` if changing that address. This stack exposes only the frontend, bound to localhost; API and database stay on the internal Compose network. Its `crm_data` volume belongs to this Compose project: it does not automatically reuse a database from a separately started backend stack. To use an existing Compose database volume, explicitly map `crm_data` to that volume before starting this stack. Avoid running two stacks that expose the same frontend port.
+
+To stop while preserving database data:
+
+```sh
+docker compose --env-file ../crm_backend/.env down
+```
+
+### Frontend Docker image on Render
+
+For a Render Docker web service, use this frontend `Dockerfile` and leave Docker Command empty. Set runtime `BACKEND_TARGET=https://YOUR-BACKEND.onrender.com` with no trailing slash or API path. Nginx listens on Render's `PORT` (8080 by default). The baked-in `VITE_API_URL` defaults to `/api/v1`, so the browser uses the Nginx proxy. Vite variables are build arguments; set them before building if overriding their defaults.
+
+On the backend, set `FRONTEND_BASE_URL` to the frontend's public HTTPS URL so invitations point to the deployed app. Add the backend's public hostname to backend `ALLOWED_HOSTS`; Nginx forwards the upstream host so Render can route to the correct backend service. Local Compose supplies `api`, `localhost` and `127.0.0.1` automatically, including the readiness check host. Add the frontend origin to `CORS_ORIGINS` if also calling the backend directly. Never pass backend secrets through `VITE_*` build arguments. The frontend image excludes local `.env` files.
+
+The proxy uses the official [Nginx image's environment templates](https://hub.docker.com/_/nginx). The Compose command explicitly loads backend variables for [Compose interpolation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation); a service's `env_file` alone does not provide interpolation values.

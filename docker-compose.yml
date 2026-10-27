@@ -1,0 +1,81 @@
+# Run from crm_frontend:
+# docker compose --env-file ../crm_backend/.env up --build -d
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-crm_db}
+      POSTGRES_USER: ${POSTGRES_USER:-crm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the backend .env}
+    volumes:
+      - crm_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  migrate:
+    build: ../crm_backend
+    env_file: ../crm_backend/.env
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL to the Compose db hostname}
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: ../crm_backend
+    restart: unless-stopped
+    env_file: ../crm_backend/.env
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL to the Compose db hostname}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 5002
+      ALLOWED_HOSTS: '["api","localhost","127.0.0.1"]'
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+    # The migrate service completes before the API or worker starts.
+    command: ["python", "-m", "app"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5002/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  worker:
+    build: ../crm_backend
+    restart: unless-stopped
+    env_file: ../crm_backend/.env
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL to the Compose db hostname}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+    command: ["python", "-m", "app.services.worker"]
+    depends_on:
+      api:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_URL: /api/v1
+        VITE_FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+        VITE_GIT_VERSION: ${VITE_GIT_VERSION:-dev}
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      BACKEND_TARGET: http://api:5002
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  crm_data:
