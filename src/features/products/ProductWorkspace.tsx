@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpRight, Package, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 import { useCRM } from "../../app/context";
 import {
   Avatar,
@@ -37,16 +37,10 @@ export function ProductWorkspace({
       open
       onOpenChange={(open) => !open && onClose()}
       title={product.name}
-      description={`${product.code} · ${product.type}`}
+      description={product.type}
       drawer
     >
       <div className="product-workspace-banner">
-        <span
-          className="portfolio-symbol"
-          style={{ background: `${product.color}12`, color: product.color }}
-        >
-          <Package size={25} />
-        </span>
         <div>
           <span className="section-kicker">PRODUCT WORKSPACE</span>
           <Badge tone={product.status === "Active" ? "green" : "neutral"}>

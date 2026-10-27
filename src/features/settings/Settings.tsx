@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { Database, ShieldCheck } from "lucide-react";
+import { Database, MailPlus, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import { RecordActions } from "../../components/ui/RecordActions";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { toast } from "sonner";
 import { useCRM } from "../../app/context";
 import {
@@ -26,42 +28,44 @@ export function Settings() {
         title="Settings"
         description="Your workspace connection and account security."
       />
-      <section className="panel settings-panel">
-        <div className="settings-row">
-          <div>
-            <h3>
-              <Database size={17} />
-              CRM server
-            </h3>
-            <p>
-              CRM records are stored in PostgreSQL and loaded from your
-              workspace API.
-            </p>
+      <div className="settings-layout">
+        <section className="panel settings-panel">
+          <div className="settings-row">
+            <div>
+              <h3>
+                <Database size={17} />
+                CRM server
+              </h3>
+              <p>
+                CRM records are stored in PostgreSQL and loaded from your
+                workspace API.
+              </p>
+            </div>
+            <Badge tone="green">Connected</Badge>
           </div>
-          <Badge tone="green">Connected</Badge>
-        </div>
-        <div className="settings-row">
-          <div>
-            <h3>
-              <ShieldCheck size={17} />
-              Role & access
-            </h3>
-            <p>
-              Signed in as {user.firstName} {user.lastName}. Your administrator
-              manages your access.
-            </p>
+          <div className="settings-row">
+            <div>
+              <h3>
+                <ShieldCheck size={17} />
+                Role & access
+              </h3>
+              <p>
+                Signed in as {user.firstName} {user.lastName}. Your
+                administrator manages your access.
+              </p>
+            </div>
+            <Badge>{user.role}</Badge>
           </div>
-          <Badge>{user.role}</Badge>
-        </div>
-        <div className="settings-row">
-          <div>
-            <h3>Time zone</h3>
-            <p>Dates are displayed in South African local time.</p>
+          <div className="settings-row">
+            <div>
+              <h3>Time zone</h3>
+              <p>Dates are displayed in South African local time.</p>
+            </div>
+            <span>Africa/Johannesburg</span>
           </div>
-          <span>Africa/Johannesburg</span>
-        </div>
-      </section>
-      <PasswordForm />
+        </section>
+        <PasswordForm />
+      </div>
     </>
   );
 }
@@ -69,10 +73,13 @@ function PasswordForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   return (
-    <section className="panel settings-panel">
-      <h3>Change password</h3>
-      <p>Changing your password signs out all sessions.</p>
+    <section className="panel settings-password-panel">
+      <div className="settings-section-heading">
+        <h3>Change password</h3>
+        <p>Choose a strong password. Updating it signs out all sessions.</p>
+      </div>
       <form
+        className="settings-password-form"
         onSubmit={async (event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
@@ -100,10 +107,11 @@ function PasswordForm() {
         }}
       >
         <div className="form-grid">
-          <label>
+          <label className="settings-current-password">
             Current password
-            <input
-              type="password"
+            <PasswordInput
+              visibilityLabel="current password"
+              disabled={busy}
               name="currentPassword"
               autoComplete="current-password"
               required
@@ -112,8 +120,9 @@ function PasswordForm() {
           </label>
           <label>
             New password
-            <input
-              type="password"
+            <PasswordInput
+              visibilityLabel="new password"
+              disabled={busy}
               name="password"
               autoComplete="new-password"
               required
@@ -123,8 +132,9 @@ function PasswordForm() {
           </label>
           <label>
             Confirm new password
-            <input
-              type="password"
+            <PasswordInput
+              visibilityLabel="password confirmation"
+              disabled={busy}
               name="confirmation"
               autoComplete="new-password"
               required
@@ -308,7 +318,9 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                 <th>Role</th>
                 <th>Product access</th>
                 <th>Status</th>
-                <th />
+                <th className="record-actions-heading" scope="col">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -342,52 +354,11 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                             ? "Invitation pending"
                             : "Active"}
                       </Badge>
-                    </td>
-                    <td>
-                      <Button onClick={() => open(member)}>Edit</Button>
-                      <Button
-                        variant="danger"
-                        disabled={busy || member.id === user.id}
-                        title={
-                          member.id === user.id
-                            ? "You cannot delete your own account"
-                            : "Delete user account"
-                        }
-                        onClick={() => {
-                          setDeleting(member);
-                          setReplacement(user.id);
-                          setDeleteError("");
-                        }}
-                      >
-                        Delete
-                      </Button>
-                      {member.active !== false &&
-                        member.passwordSet === false && (
-                          <Button
-                            disabled={busy}
-                            onClick={async () => {
-                              setBusy(true);
-                              try {
-                                await request(
-                                  `/users/${member.id}/invitation`,
-                                  json("POST"),
-                                );
-                                await refresh();
-                                toast.success(
-                                  "New invitation queued. Previous links are now invalid.",
-                                );
-                              } catch (error) {
-                                toast.error((error as Error).message);
-                              } finally {
-                                setBusy(false);
-                              }
-                            }}
-                          >
-                            Resend invitation
-                          </Button>
-                        )}
                       {member.passwordSet === false && (
-                        <small title={member.invitationReason}>
+                        <small
+                          className="invitation-delivery-note"
+                          title={member.invitationReason}
+                        >
                           {member.invitationStatus === "Accepted"
                             ? "Invitation email accepted by provider"
                             : (member.invitationStatus ??
@@ -398,6 +369,56 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                             : ""}
                         </small>
                       )}
+                    </td>
+                    <td className="user-actions-cell">
+                      <RecordActions
+                        label={`Actions for ${member.firstName} ${member.lastName}`}
+                        disabled={busy}
+                        actions={[
+                          {
+                            label: "Edit user",
+                            icon: <Pencil size={16} />,
+                            onSelect: () => open(member),
+                          },
+                          ...(member.active !== false &&
+                          member.passwordSet === false
+                            ? [
+                                {
+                                  label: "Resend invitation",
+                                  icon: <MailPlus size={16} />,
+                                  onSelect: async () => {
+                                    setBusy(true);
+                                    try {
+                                      await request(
+                                        `/users/${member.id}/invitation`,
+                                        json("POST"),
+                                      );
+                                      await refresh();
+                                      toast.success(
+                                        "New invitation queued. Previous links are now invalid.",
+                                      );
+                                    } catch (error) {
+                                      toast.error((error as Error).message);
+                                    } finally {
+                                      setBusy(false);
+                                    }
+                                  },
+                                },
+                              ]
+                            : []),
+                          {
+                            label: "Delete user",
+                            icon: <Trash2 size={16} />,
+                            destructive: true,
+                            disabled: member.id === user.id,
+                            onSelect: () => {
+                              setDeleting(member);
+                              setReplacement(user.id);
+                              setDeleteError("");
+                            },
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -412,7 +433,9 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                 <th>Provider</th>
                 <th>Product access</th>
                 <th>Status</th>
-                <th />
+                <th className="record-actions-heading" scope="col">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -429,8 +452,18 @@ export function AdministrationPage({ type }: { type: "users" | "email" }) {
                       {identity.status}
                     </Badge>
                   </td>
-                  <td>
-                    <Button onClick={() => open(identity)}>Edit</Button>
+                  <td className="user-actions-cell">
+                    <RecordActions
+                      label={`Actions for ${identity.name}`}
+                      disabled={busy}
+                      actions={[
+                        {
+                          label: "Edit sender",
+                          icon: <Pencil size={16} />,
+                          onSelect: () => open(identity),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

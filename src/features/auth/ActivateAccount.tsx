@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Brand } from "../../components/shared/Brand";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 import { Button } from "../../components/ui/primitives";
 import {
   activateAccount,
@@ -55,10 +57,7 @@ export function ActivateAccount() {
     <div className="activation-page">
       <main className="activation-card">
         <div className="activation-brand">
-          ICE <span>RELATIONSHIP MANAGEMENT</span>
-        </div>
-        <div className="activation-icon">
-          <ShieldCheck size={25} />
+          <Brand />
         </div>
         {state === "checking" ? (
           <>
@@ -119,8 +118,8 @@ export function ActivateAccount() {
             >
               <label>
                 New password
-                <input
-                  type="password"
+                <PasswordInput
+                  visibilityLabel="new password"
                   autoComplete="new-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -132,8 +131,8 @@ export function ActivateAccount() {
               </label>
               <label>
                 Confirm password
-                <input
-                  type="password"
+                <PasswordInput
+                  visibilityLabel="password confirmation"
                   autoComplete="new-password"
                   value={confirmation}
                   onChange={(event) => setConfirmation(event.target.value)}

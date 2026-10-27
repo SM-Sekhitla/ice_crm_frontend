@@ -159,7 +159,7 @@ export function Products() {
             <Search size={16} />
             <input
               aria-label="Search products"
-              placeholder="Search by name, code, or description…"
+              placeholder="Search products…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -225,14 +225,6 @@ export function Products() {
                   aria-label={p.name}
                 >
                   <div className="portfolio-product">
-                    <button
-                      className="portfolio-symbol"
-                      aria-label={`Open ${p.name} workspace`}
-                      style={{ color: p.color, background: `${p.color}12` }}
-                      onClick={() => setDetailId(p.id)}
-                    >
-                      <Package size={22} />
-                    </button>
                     <div>
                       <button
                         className="portfolio-product-name"
@@ -242,13 +234,11 @@ export function Products() {
                         <ArrowUpRight size={13} />
                       </button>
                       <div className="portfolio-product-meta">
-                        <code>{p.code}</code>
-                        <span>·</span>
                         <span>{p.type}</span>
                       </div>
-                      <p title={p.description}>
-                        {p.description || "No description added yet."}
-                      </p>
+                      {p.description && (
+                        <p title={p.description}>{p.description}</p>
+                      )}
                     </div>
                   </div>
                   <div className="portfolio-owner">

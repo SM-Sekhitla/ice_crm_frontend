@@ -63,7 +63,7 @@ export function ProductDeleteDialog({
       }
       description={
         usage.canDelete
-          ? `Permanently remove ${product.name} (${product.code}) from your portfolio.`
+          ? `Permanently remove ${product.name} from your portfolio.`
           : `${product.name} is connected to records in your workspace.`
       }
     >
@@ -83,7 +83,6 @@ export function ProductDeleteDialog({
             <div className="product-delete-record">
               <span style={{ background: product.color }} />
               <strong>{product.name}</strong>
-              <code>{product.code}</code>
             </div>
           </>
         ) : (

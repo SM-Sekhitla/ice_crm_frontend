@@ -280,7 +280,28 @@ export function App() {
     <ErrorBoundary>
       <Tooltip.Provider delayDuration={350}>
         <RouterProvider router={router} />
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster
+          position="top-right"
+          closeButton
+          theme="light"
+          toastOptions={{
+            unstyled: true,
+            classNames: {
+              toast: "crm-toast",
+              title: "crm-toast-title",
+              description: "crm-toast-description",
+              content: "crm-toast-content",
+              icon: "crm-toast-icon",
+              closeButton: "crm-toast-close",
+              success: "crm-toast-success",
+              error: "crm-toast-error",
+              warning: "crm-toast-warning",
+              info: "crm-toast-info",
+              actionButton: "crm-toast-action",
+              cancelButton: "crm-toast-cancel",
+            },
+          }}
+        />
       </Tooltip.Provider>
     </ErrorBoundary>
   );

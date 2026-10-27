@@ -177,7 +177,7 @@ export function Shell({ children }: { children: ReactNode }) {
       />
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <Link to="/" aria-label="ICE CRM home">
+          <Link to="/" aria-label="CRM home">
             <Brand />
           </Link>
           <button
@@ -188,14 +188,6 @@ export function Shell({ children }: { children: ReactNode }) {
             <PanelLeftClose size={17} />
           </button>
         </div>
-        <button className="workspace-switch" onClick={() => setHelp(true)}>
-          <span className="workspace-logo">SA</span>
-          <div>
-            <strong>ICE South Africa</strong>
-            <small>Team workspace</small>
-          </div>
-          <ChevronDown size={14} />
-        </button>
         <div className="sidebar-nav">
           {groups
             .filter(

@@ -1,17 +1,24 @@
-/** Compact app identity using the ICE website's crimson and dark palette. */
+/** Original company symbol with a CRM wordmark; symbol only on the rail. */
 export function Brand() {
   return (
-    <span className="brand">
-      <span className="brand-symbol">
-        ICE
-        <span className="brand-corner" />
-      </span>
-      <span className="brand-text">
-        <strong>
-          ICE<span className="brand-divider">/</span>
-          <span className="brand-product">CRM</span>
-        </strong>
-        <small>BUSINESS DEVELOPMENT</small>
+    <span
+      className="brand"
+      role="img"
+      aria-label="CRM — Customer Relationship Management"
+    >
+      <svg
+        className="brand-logo-symbol"
+        viewBox="0 0 444 444"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <image href="/brand/ice-logo.png" width="2331" height="444" />
+      </svg>
+      <span className="brand-logo-full">
+        <strong className="brand-logo-wordmark">CRM</strong>
+        <small className="brand-logo-description">
+          CUSTOMER RELATIONSHIP MANAGEMENT
+        </small>
       </span>
     </span>
   );

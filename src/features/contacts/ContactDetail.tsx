@@ -204,15 +204,6 @@ export function ContactDetail({
                     return (
                       <div className="relationship-card" key={a.id}>
                         <div>
-                          <span
-                            className="product-icon"
-                            style={{
-                              color: p.color,
-                              background: `${p.color}18`,
-                            }}
-                          >
-                            {p.code}
-                          </span>
                           <div>
                             <strong>{p.name}</strong>
                             <p>

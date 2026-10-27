@@ -7,6 +7,9 @@
     sans-serif;
 }
 :root {
+  --shadow-control: 0 1px 2px #1717190a, 0 2px 5px #17171906;
+  --shadow-surface: 0 2px 5px #17171905, 0 8px 24px #17171907;
+  --shadow-raised: 0 4px 8px #17171908, 0 12px 28px #1717190c;
   --brand: #c1121f;
   --brand-hover: #a00f1a;
   --brand-soft: #fbeef0;
@@ -273,6 +276,45 @@ label textarea {
   align-items: center;
   gap: 11px;
   line-height: 1;
+}
+.brand-logo-full,
+.brand-logo-symbol {
+  filter: brightness(0) invert(1);
+}
+.brand-logo-full {
+  display: block;
+  width: 125px;
+  height: auto;
+}
+.brand-logo-wordmark {
+  display: block;
+  color: #fff;
+  font-size: 29px;
+  font-weight: 850;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.brand-logo-description {
+  display: block;
+  margin-top: 5px;
+  color: #fff;
+  font-size: 5.2px;
+  font-weight: 600;
+  letter-spacing: 0.12px;
+  white-space: nowrap;
+}
+.brand-logo-symbol {
+  display: block;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.sidebar-collapsed .brand-logo-full {
+  display: none;
+}
+.sidebar-collapsed .brand-logo-symbol {
+  display: block;
 }
 .brand-symbol {
   position: relative;
@@ -2872,6 +2914,9 @@ td strong {
   }
 }
 @media (max-width: 1250px) {
+  .brand-logo-full {
+    width: 105px;
+  }
   :root {
     --sidebar: 220px;
   }
@@ -2974,6 +3019,12 @@ td strong {
   }
 }
 @media (max-width: 1000px) {
+  .brand-logo-full {
+    display: none;
+  }
+  .brand-logo-symbol {
+    display: block;
+  }
   :root {
     --sidebar: 76px;
   }
@@ -3366,6 +3417,13 @@ td strong {
   }
 }
 @media (max-width: 520px) {
+  .mobile-nav-open .brand-logo-full {
+    display: block;
+    width: 125px;
+  }
+  .mobile-nav-open .brand-logo-symbol {
+    display: block;
+  }
   :root {
     --sidebar: 0px;
   }
@@ -6611,26 +6669,17 @@ button.portfolio-symbol:hover {
   box-shadow: 0 24px 80px #0005;
 }
 .activation-brand {
-  font-size: 24px;
-  font-weight: 750;
-  letter-spacing: -0.05em;
-  color: #c1121f;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+  padding: 22px 24px;
+  border-radius: 10px;
+  background: #171719;
 }
-.activation-brand span {
+.activation-brand .brand-logo-full {
   display: block;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  color: #746b72;
-  margin-top: 3px;
+  width: 125px;
 }
-.activation-icon {
-  color: #c1121f;
-  background: #fff1f2;
-  display: inline-flex;
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 18px;
+.activation-brand .brand-logo-symbol {
+  display: block;
 }
 .activation-card h1 {
   font-size: 26px;
@@ -6780,5 +6829,287 @@ button.portfolio-symbol:hover {
 @media (max-width: 500px) {
   .brevo-image-summary {
     flex-wrap: wrap;
+  }
+}
+
+/* Shared depth and compact record actions. */
+.panel,
+.metrics-grid,
+.portfolio-workspace,
+.portfolio-overview,
+.relationship-card,
+.lead-card,
+.campaign-card {
+  box-shadow: var(--shadow-surface);
+}
+.lead-card:hover,
+.campaign-card:hover {
+  box-shadow: var(--shadow-raised);
+}
+.button {
+  box-shadow: var(--shadow-control);
+}
+.button-primary {
+  box-shadow:
+    0 2px 4px #a00f1a1a,
+    0 4px 10px #a00f1a12;
+}
+.button:not(:disabled):hover {
+  box-shadow:
+    0 2px 5px #17171912,
+    0 4px 10px #17171908;
+}
+.button-ghost,
+.button-ghost:not(:disabled):hover,
+.button:disabled {
+  box-shadow: none;
+}
+.user-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.row-action {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 8px;
+}
+.user-actions-cell > small {
+  display: block;
+  margin-top: 8px;
+  max-width: 250px;
+  white-space: normal;
+  font-size: 10px;
+  color: var(--muted);
+}
+/* Sonner keeps focus, announcements, dismissal and positioning. */
+.crm-toast {
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: var(--width, 356px);
+  max-width: 100%;
+  padding: 17px 42px 17px 17px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-raised);
+  font-family: var(--font-sans);
+}
+.crm-toast-content {
+  flex: 1;
+  min-width: 0;
+}
+.crm-toast-title {
+  font-size: 12px;
+  line-height: 19px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.crm-toast-description {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 18px;
+}
+.crm-toast-icon {
+  display: flex;
+  margin-top: 2px;
+  color: var(--brand);
+}
+.crm-toast-success {
+  border-left-color: #39775b;
+}
+.crm-toast-success .crm-toast-icon {
+  color: #39775b;
+}
+.crm-toast-warning {
+  border-left-color: #a57622;
+}
+.crm-toast-warning .crm-toast-icon {
+  color: #a57622;
+}
+.crm-toast-info {
+  border-left-color: #526a82;
+}
+.crm-toast-info .crm-toast-icon {
+  color: #526a82;
+}
+[data-sonner-toast] .crm-toast-close {
+  position: absolute;
+  inset: 12px 10px auto auto;
+  transform: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+[data-sonner-toast] .crm-toast-close:hover {
+  background: var(--canvas);
+  color: var(--ink);
+}
+.crm-toast-action,
+.crm-toast-cancel {
+  align-self: center;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.crm-toast-action {
+  background: var(--brand);
+  color: #fff;
+}
+.crm-toast-cancel {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* Settings use separate, aligned overview and security cards. */
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.settings-layout .settings-panel {
+  padding: 4px 26px;
+}
+.settings-layout .settings-row {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 26px 0;
+}
+.settings-layout .settings-row > div {
+  flex: 1 1 220px;
+}
+.settings-layout .settings-row > .badge {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.settings-layout .settings-row p {
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+.settings-password-panel {
+  padding: 28px;
+}
+.settings-section-heading h3 {
+  font-size: 15px;
+  color: var(--ink);
+}
+.settings-section-heading p {
+  margin: 8px 0 24px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.settings-password-form {
+  display: grid;
+  gap: 24px;
+}
+.settings-password-form > .button {
+  justify-self: start;
+}
+.settings-current-password {
+  grid-column: 1 / -1;
+}
+.password-input-control {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+.password-input-control input {
+  width: 100%;
+  padding-right: 44px;
+}
+.password-visibility {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.password-visibility:hover {
+  background: var(--canvas);
+  color: var(--ink);
+}
+.record-actions-heading,
+.user-actions-cell {
+  text-align: right;
+  width: 88px;
+}
+.record-actions-menu {
+  min-width: 192px;
+}
+.dropdown.record-actions-menu > [role="menuitem"] {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+.record-actions-menu [data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dropdown.record-actions-menu > .record-action-danger {
+  color: var(--brand);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.invitation-delivery-note {
+  display: block;
+  margin-top: 7px;
+  max-width: 190px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+  white-space: normal;
+}
+@media (max-width: 1150px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .settings-password-panel {
+    padding: 24px 20px;
+  }
+  .settings-layout .settings-panel {
+    padding: 0 20px;
+  }
+  .settings-password-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-password-form > .button {
+    justify-self: stretch;
+  }
+  .activation-brand {
+    padding: 18px 20px;
   }
 }
