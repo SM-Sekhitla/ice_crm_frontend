@@ -38,7 +38,7 @@ Never put credentials or provider secrets in `VITE_` settings.
 
 The login form posts credentials to FastAPI. Access tokens stay in memory; the tab's rotating refresh token is kept in `sessionStorage` to restore a session after reload. Concurrent expired requests share one refresh operation. Logout revokes server sessions and clears credentials and query data. Password changes and administrator account changes revoke sessions. Invalid/expired sessions return to sign-in; server outages show an error with retry rather than fabricated data.
 
-The backend independently enforces roles and record ownership. BDOs only see their owned relationships on assigned products; administrators manage users, assignments, senders and products. Frontend role checks improve the interface but do not grant access.
+Every signed-in user sees all contacts, leads and clients across owners and product assignments. Related products, follow-ups, history and public owner names are available for display. Write permissions remain ownership-based for BDOs, while Super Admins retain administration and deletion controls. Campaign and email settings keep their separate access rules. Frontend role checks improve the interface; the backend enforces authorization.
 
 CRM records are stored only in PostgreSQL. TanStack Query caches the current server workspace in memory and refreshes it every 15 seconds while active. Browser storage contains only the tab's refresh token and personal UI preferences such as sidebar state, saved filters and recent searches. The old browser demo database, legacy session, and legacy search data are removed on application startup; old CRM demo records are never migrated into PostgreSQL.
 
@@ -55,7 +55,7 @@ CRM records are stored only in PostgreSQL. TanStack Query caches the current ser
 - Dashboard, tables, search, charts and CSV exports derived from actual server records.
 - Account password change and server-backed logout.
 
-The frontend uses a scoped `GET /api/v1/workspace` snapshot to preserve the existing collection-based screens. Contact and campaign changes use dedicated API routes. IDs and ownership come from the backend; the client never impersonates a supplied user ID. Mutations invalidate the server workspace query. As data grows, individual list queries can replace the snapshot using the backend's paginated routes.
+The frontend uses a shared CRM `GET /api/v1/workspace` snapshot with separately scoped campaign and administration data to preserve the existing collection-based screens. Contact and campaign changes use dedicated API routes. IDs and ownership come from the backend; the client never impersonates a supplied user ID. Mutations invalidate the server workspace query. As data grows, individual list queries can replace the snapshot using the backend's paginated routes.
 
 ## Campaign delivery
 

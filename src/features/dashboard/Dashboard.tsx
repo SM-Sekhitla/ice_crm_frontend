@@ -1,3 +1,4 @@
+import { canManageAssociation } from "../../lib/permissions";
 import { useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
 import {
@@ -537,6 +538,7 @@ export function Dashboard() {
                       <button
                         className="complete-button"
                         aria-label={`Complete follow-up for ${c.firstName}`}
+                        disabled={!canManageAssociation(user, a)}
                         onClick={async () => {
                           try {
                             await api.setFollowUpStatus(

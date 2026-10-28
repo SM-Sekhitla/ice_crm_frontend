@@ -1,4 +1,4 @@
-import type { Database, Permission, User } from "../types";
+import type { Association, Database, Permission, User } from "../types";
 const roles: Record<User["role"], Permission[]> = {
   "Super Admin": [
     "contacts.view",
@@ -30,23 +30,18 @@ export const canAccessProduct = (user: User, productId: string) =>
   user.role === "Super Admin" || user.productIds.includes(productId);
 export function scopeDatabase(db: Database, user: User): Database {
   if (user.role === "Super Admin") return db;
-  const associations = db.associations.filter(
-    (a) => a.ownerId === user.id && canAccessProduct(user, a.productId),
-  );
-  const associationIds = new Set(associations.map((a) => a.id));
-  const contactIds = new Set(associations.map((a) => a.contactId));
   const campaigns = db.campaigns.filter(
     (c) => canAccessProduct(user, c.productId) && c.createdBy === user.id,
   );
   const campaignIds = new Set(campaigns.map((c) => c.id));
   return {
     ...db,
-    products: db.products.filter((p) => canAccessProduct(user, p.id)),
-    contacts: db.contacts.filter((c) => contactIds.has(c.id)),
-    associations,
-    leads: db.leads.filter((l) => associationIds.has(l.associationId)),
-    clients: db.clients.filter((c) => associationIds.has(c.associationId)),
-    followUps: db.followUps.filter((f) => associationIds.has(f.associationId)),
+    products: db.products,
+    contacts: db.contacts,
+    associations: db.associations,
+    leads: db.leads,
+    clients: db.clients,
+    followUps: db.followUps,
     campaigns,
     audienceSegments: db.audienceSegments.filter(
       (s) => s.createdBy === user.id && canAccessProduct(user, s.productId),
@@ -64,9 +59,24 @@ export function scopeDatabase(db: Database, user: User): Database {
     ),
     activities: db.activities.filter(
       (a) =>
-        a.productId !== null &&
-        canAccessProduct(user, a.productId) &&
-        a.userId === user.id,
+        !!a.contactId ||
+        (a.productId !== null &&
+          canAccessProduct(user, a.productId) &&
+          a.userId === user.id),
     ),
   };
 }
+
+export const canManageAssociation = (user: User, association: Association) =>
+  user.role === "Super Admin" ||
+  (association.ownerId === user.id &&
+    canAccessProduct(user, association.productId));
+
+export const canEditContact = (user: User, db: Database, contactId: string) =>
+  can(user, "contacts.edit") &&
+  (user.role === "Super Admin" ||
+    db.associations.some(
+      (association) =>
+        association.contactId === contactId &&
+        canManageAssociation(user, association),
+    ));

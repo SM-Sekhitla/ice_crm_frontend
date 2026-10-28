@@ -1,3 +1,4 @@
+import { canManageAssociation } from "../../lib/permissions";
 import { useState } from "react";
 import {
   Columns3,
@@ -27,7 +28,7 @@ const pipeline: Stage[] = [
   "Negotiation",
 ];
 export function Leads() {
-  const { db, openContact } = useCRM();
+  const { db, user, openContact } = useCRM();
   const [view, setView] = useState("Pipeline");
   const [search, setSearch] = useState("");
   const [product, setProduct] = useState("");
@@ -132,7 +133,7 @@ export function Leads() {
                   e.preventDefault();
                   const id = e.dataTransfer.getData("text/plain");
                   const a = db.associations.find((a) => a.id === id);
-                  if (a && a.stage !== stage)
+                  if (a && canManageAssociation(user, a) && a.stage !== stage)
                     setTransition({ association: a, stage });
                   setDragging("");
                 }}
@@ -167,7 +168,7 @@ export function Leads() {
                       return (
                         <article
                           className={`lead-card ${dragging === a.id ? "dragging" : ""}`}
-                          draggable
+                          draggable={canManageAssociation(user, a)}
                           onDragStart={(e) => {
                             e.dataTransfer.setData("text/plain", a.id);
                             setDragging(a.id);
@@ -209,6 +210,7 @@ export function Leads() {
                           </div>
                           <select
                             aria-label={`Change stage for ${c.firstName}`}
+                            disabled={!canManageAssociation(user, a)}
                             value={a.stage}
                             onChange={(e) =>
                               setTransition({
@@ -276,6 +278,7 @@ export function Leads() {
                     <td>
                       <select
                         aria-label={`Stage for ${c.firstName}`}
+                        disabled={!canManageAssociation(user, a)}
                         value={a.stage}
                         onChange={(e) =>
                           setTransition({

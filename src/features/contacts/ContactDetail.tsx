@@ -4,7 +4,11 @@ import {
   DeleteContacts,
   FollowUps,
 } from "./ContactActions";
-import { can } from "../../lib/permissions";
+import {
+  can,
+  canEditContact,
+  canManageAssociation,
+} from "../../lib/permissions";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -82,7 +86,10 @@ export function ContactDetail({
               </div>
             </div>
             <div className="contact-record-actions">
-              <Button onClick={() => setEditing(true)}>
+              <Button
+                disabled={!canEditContact(user, db, contact.id)}
+                onClick={() => setEditing(true)}
+              >
                 <Pencil size={14} />
                 Edit contact
               </Button>
@@ -231,6 +238,7 @@ export function ContactDetail({
                         {a.stage === "Contact" ? (
                           <Button
                             variant="primary"
+                            disabled={!canManageAssociation(user, a)}
                             onClick={() =>
                               setTransition({
                                 association: a,
@@ -242,6 +250,7 @@ export function ContactDetail({
                           </Button>
                         ) : a.stage !== "Client" ? (
                           <Button
+                            disabled={!canManageAssociation(user, a)}
                             onClick={() =>
                               setTransition({ association: a, stage: "Client" })
                             }
@@ -312,6 +321,7 @@ export function ContactDetail({
                     <textarea
                       rows={9}
                       value={notes ?? contact.notes}
+                      readOnly={!canEditContact(user, db, contact.id)}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Add context for your team…"
                     />
@@ -319,6 +329,7 @@ export function ContactDetail({
                   <Button
                     variant="primary"
                     loading={busy}
+                    disabled={!canEditContact(user, db, contact.id)}
                     onClick={async () => {
                       try {
                         setBusy(true);

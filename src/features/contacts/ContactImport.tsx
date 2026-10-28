@@ -152,7 +152,10 @@ export function ContactImport({ onClose }: { onClose: () => void }) {
                 >
                   <option value="">Choose an active product</option>
                   {db.products
-                    .filter((p) => p.status === "Active")
+                    .filter(
+                      (p) =>
+                        p.status === "Active" && canAccessProduct(user, p.id),
+                    )
                     .map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}

@@ -1,3 +1,4 @@
+import { canAccessProduct } from "../../lib/permissions";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -154,7 +155,9 @@ export function ContactForm({
                 <fieldset className="field-group">
                   <legend>Associated products *</legend>
                   {!db.products.some(
-                    (product) => product.status === "Active",
+                    (product) =>
+                      product.status === "Active" &&
+                      canAccessProduct(user, product.id),
                   ) && (
                     <p className="form-hint">
                       Create an active product before adding contacts, or ask
@@ -163,7 +166,10 @@ export function ContactForm({
                   )}
                   <div className="product-options">
                     {db.products
-                      .filter((p) => p.status === "Active")
+                      .filter(
+                        (p) =>
+                          p.status === "Active" && canAccessProduct(user, p.id),
+                      )
                       .map((p) => (
                         <button
                           type="button"

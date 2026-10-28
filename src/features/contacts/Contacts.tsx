@@ -1,6 +1,6 @@
 import { stages } from "../../types";
 import { toast } from "sonner";
-import { can } from "../../lib/permissions";
+import { can, canEditContact } from "../../lib/permissions";
 import {
   filterContacts,
   emptyContactFilters,
@@ -289,6 +289,7 @@ export function Contacts({
             <button
               className="icon-button"
               aria-label={`Edit ${row.original.firstName} ${row.original.lastName}`}
+              disabled={!canEditContact(user, db, row.original.id)}
               onClick={() => setEditId(row.original.id)}
             >
               <Pencil size={14} />
@@ -680,7 +681,11 @@ export function Contacts({
               <ArrowDownToLine size={13} />
               Export selected
             </Button>
-            <Button onClick={() => setTagging(true)}>
+            <Button
+              disabled={selectedIds.some((id) => !canEditContact(user, db, id))}
+              title="Add tags to contacts you can edit"
+              onClick={() => setTagging(true)}
+            >
               <Tag size={13} />
               Add tag
             </Button>

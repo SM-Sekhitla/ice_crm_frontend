@@ -10,7 +10,11 @@ import {
 import { toast } from "sonner";
 import { useCRM } from "../../app/context";
 import { Badge, Button, Empty, Modal } from "../../components/ui/primitives";
-import { can, canAccessProduct } from "../../lib/permissions";
+import {
+  can,
+  canAccessProduct,
+  canManageAssociation,
+} from "../../lib/permissions";
 import { api } from "../../services/api";
 import { date } from "../../lib/format";
 import type { Contact, FollowUp } from "../../types";
@@ -111,7 +115,9 @@ export function ContactRelationships({ contact }: { contact: Contact }) {
   const relations = db.associations.filter((a) => a.contactId === contact.id);
   const available = db.products.filter(
     (p) =>
-      p.status === "Active" && !relations.some((a) => a.productId === p.id),
+      p.status === "Active" &&
+      canAccessProduct(user, p.id) &&
+      !relations.some((a) => a.productId === p.id),
   );
   const chosen = relations.find((a) => a.id === action?.id);
   return (
@@ -119,7 +125,11 @@ export function ContactRelationships({ contact }: { contact: Contact }) {
       <div className="contact-section-actions">
         <p>Each product keeps its own owner and lifecycle.</p>
         <Button
-          disabled={!available.length}
+          disabled={
+            !available.length ||
+            (user.role !== "Super Admin" &&
+              !relations.some((a) => canManageAssociation(user, a)))
+          }
           onClick={() => {
             setSelectedProduct(available[0]?.id ?? "");
             setAction({ type: "add" });
@@ -156,7 +166,11 @@ export function ContactRelationships({ contact }: { contact: Contact }) {
             )}
             <button
               className="icon-button product-delete-action"
-              disabled={relations.length <= 1 || protectedHistory}
+              disabled={
+                relations.length <= 1 ||
+                protectedHistory ||
+                !canManageAssociation(user, a)
+              }
               aria-label={`Remove ${product.name} relationship`}
               title={
                 protectedHistory
@@ -303,6 +317,11 @@ export function FollowUps({ contact }: { contact: Contact }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const relations = db.associations.filter((a) => a.contactId === contact.id);
+  const editableRelations = relations.filter((a) =>
+    canManageAssociation(user, a),
+  );
+  const canEditTask = (task: FollowUp) =>
+    editableRelations.some((a) => a.id === task.associationId);
   const tasks = db.followUps
     .filter((f) => relations.some((a) => a.id === f.associationId))
     .sort(
@@ -315,6 +334,7 @@ export function FollowUps({ contact }: { contact: Contact }) {
       <div className="contact-section-actions">
         <p>Follow through on every conversation.</p>
         <Button
+          disabled={!editableRelations.length}
           onClick={() => {
             setEditor("new");
             setError("");
@@ -363,6 +383,7 @@ export function FollowUps({ contact }: { contact: Contact }) {
               <button
                 className="icon-button"
                 aria-label={`Edit follow-up ${f.title}`}
+                disabled={!canEditTask(f)}
                 onClick={() => {
                   setEditor(f);
                   setError("");
@@ -373,7 +394,7 @@ export function FollowUps({ contact }: { contact: Contact }) {
             )}
             <button
               className="icon-button"
-              disabled={busy}
+              disabled={busy || !canEditTask(f)}
               aria-label={`${f.status === "Open" ? "Complete" : "Reopen"} follow-up ${f.title}`}
               onClick={async () => {
                 setBusy(true);
@@ -456,10 +477,12 @@ export function FollowUps({ contact }: { contact: Contact }) {
                 <select
                   name="relationship"
                   defaultValue={
-                    editor === "new" ? relations[0]?.id : editor.associationId
+                    editor === "new"
+                      ? editableRelations[0]?.id
+                      : editor.associationId
                   }
                 >
-                  {relations
+                  {editableRelations
                     .filter(
                       (a) => editor === "new" || a.id === editor.associationId,
                     )
