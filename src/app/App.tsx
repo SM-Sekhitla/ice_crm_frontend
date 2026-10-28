@@ -64,6 +64,11 @@ import {
   Profile,
   Settings,
 } from "../features/settings/Settings";
+const Calendar = lazy(() =>
+  import("../features/calendar/Calendar").then((module) => ({
+    default: module.Calendar,
+  })),
+);
 import { BackendLogs } from "../features/settings/BackendLogs";
 import { Button } from "../components/ui/primitives";
 function Workspace() {
@@ -200,6 +205,11 @@ const root = createRootRoute({
   ),
 });
 const routes = [
+  createRoute({
+    getParentRoute: () => root,
+    path: "/calendar",
+    component: Calendar,
+  }),
   createRoute({
     getParentRoute: () => root,
     path: "/backend-logs",

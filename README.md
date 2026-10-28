@@ -161,3 +161,17 @@ For a Render Docker web service, use this frontend `Dockerfile` and leave Docker
 On the backend, set `FRONTEND_BASE_URL` to the frontend's public HTTPS URL so invitations point to the deployed app. Add the backend's public hostname to backend `ALLOWED_HOSTS`; Nginx forwards the upstream host so Render can route to the correct backend service. Local Compose supplies `api`, `localhost` and `127.0.0.1` automatically, including the readiness check host. Add the frontend origin to `CORS_ORIGINS` if also calling the backend directly. Never pass backend secrets through `VITE_*` build arguments. The frontend image excludes local `.env` files.
 
 The proxy uses the official [Nginx image's environment templates](https://hub.docker.com/_/nginx). The Compose command explicitly loads backend variables for [Compose interpolation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation); a service's `env_file` alone does not provide interpolation values.
+
+## Calendar and diary
+
+Open **Calendar & diary** to plan meetings, calls, appointments, tasks and reminders. Month, timed week and 30-day agenda views share the same backend bookings. The calendar includes CRM follow-ups, contact/product links, attendee selection, all-day and multi-day events, status changes, search and event-type filters. Select a day or time slot to add a booking; select an event to view, edit, delete or export it as an `.ics` file. Overlapping week bookings use separate lanes.
+
+Dates and times always use South African time (SAST/UTC+02), regardless of the browser's timezone. Event end times are exclusive; the all-day form shows inclusive dates and converts them on save. Every active signed-in user can view the shared team calendar; organisers and Super Admins can change diary bookings. Follow-up completion retains existing CRM ownership checks. The backend validates linked records and active attendees and rejects stale edits with a refresh message.
+
+Reminders appear in-app while Calendar is open, for upcoming events you organise or attend; they are not background notifications. `.ics` exports include reminder alarms for calendar applications that support them. Attendee selection records attendance in the diary and does not send email invitations or synchronise an external calendar.
+
+Deploy both apps and apply backend migration `f13b4505e006` before using the calendar. Docker backend startup and the local runner apply migrations automatically. No additional frontend dependencies or external calendar credentials are needed.
+
+## System Logs explorer
+
+The Super Admin logs page now provides **modules** and **services** folders, file-name filtering, retained-entry counts and modification dates, a monospace preview, log-content search, severity/category filters, pagination and live refresh. Download exports up to the latest 2,000 matching entries in chronological order. The entries are protected, redacted PostgreSQL records represented as virtual `.log` files; the interface does not expose arbitrary server paths or files. Preview/export timestamps use UTC, and file modification labels use SAST.

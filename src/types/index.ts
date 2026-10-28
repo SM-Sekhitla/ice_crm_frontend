@@ -21,6 +21,8 @@ export const stages = [
 ] as const;
 export type Stage = (typeof stages)[number];
 export type Permission =
+  | "calendar.view"
+  | "calendar.manage"
   | "contacts.view"
   | "contacts.create"
   | "contacts.edit"

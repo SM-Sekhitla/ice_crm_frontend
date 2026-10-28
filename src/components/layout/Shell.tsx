@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   Bell,
+  CalendarDays,
   Boxes,
   BriefcaseBusiness,
   ChevronDown,
@@ -41,6 +42,7 @@ const groups = [
   {
     label: "WORKSPACE",
     items: [
+      { title: "Calendar & diary", path: "/calendar", icon: CalendarDays },
       { title: "Contacts", path: "/contacts", icon: ContactRound },
       { title: "Leads", path: "/leads", icon: Target },
       { title: "Clients", path: "/clients", icon: BriefcaseBusiness },
@@ -55,7 +57,7 @@ const groups = [
     label: "ADMINISTRATION",
     items: [
       { title: "User management", path: "/users", icon: Users },
-      { title: "Backend logs", path: "/backend-logs", icon: FileText },
+      { title: "System Logs", path: "/backend-logs", icon: FileText },
       {
         title: "Email configurations",
         path: "/email-configurations",
@@ -72,7 +74,8 @@ const names: Record<string, string> = {
   "/products": "Products",
   "/campaigns": "Campaigns",
   "/users": "User management",
-  "/backend-logs": "Backend logs",
+  "/backend-logs": "System Logs",
+  "/calendar": "Calendar & diary",
   "/email-configurations": "Email configurations",
   "/profile": "My profile",
   "/settings": "Settings",

@@ -2,6 +2,8 @@ import type { Association, Database, Permission, User } from "../types";
 const roles: Record<User["role"], Permission[]> = {
   "Super Admin": [
     "contacts.view",
+    "calendar.view",
+    "calendar.manage",
     "contacts.create",
     "contacts.edit",
     "contacts.delete",
@@ -16,6 +18,8 @@ const roles: Record<User["role"], Permission[]> = {
   ],
   BDO: [
     "contacts.view",
+    "calendar.view",
+    "calendar.manage",
     "contacts.create",
     "contacts.edit",
     "leads.manage",
