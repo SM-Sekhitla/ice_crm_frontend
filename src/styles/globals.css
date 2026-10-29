@@ -592,7 +592,7 @@ label textarea {
   justify-content: space-between;
   align-items: center;
   padding: 0 36px;
-  background: #000;
+  background: var(--charcoal);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid #262626;
 }
@@ -7456,7 +7456,13 @@ button.portfolio-symbol:hover {
 }
 .diary-search-bar > .search-input {
   flex: 1;
+  flex-direction: row;
+  min-width: 0;
   max-width: 300px;
+}
+.diary-search-bar .search-input input {
+  flex: 1;
+  min-width: 0;
 }
 .diary-search-bar > span {
   margin-left: auto;

@@ -118,11 +118,11 @@ In **User management → Edit**, the email field is editable. A changed address 
 
 The **Delete** action opens a confirmation with a replacement-owner choice and affected-work counts. The removed user can no longer sign in; products, relationships, open follow-ups and drafts move to the selected owner. Draft senders/signatures must be reviewed again. Contacts, clients and historical attribution remain. The old email may be used for a new invitation, with a new account ID. Your own account and the last active Super Admin cannot be deleted. Apply the backend migration before using these controls (`run_backend.py` does this on startup).
 
-## Embedded images when sending through Brevo
+## Signature images with SMTP and Brevo
 
-If a signature or message contains an uploaded embedded image, use **Prepare images for Brevo** in Compose or the launch confirmation. The dialog detects the files and lets you download each image. Upload it to Brevo's Content library or your website, then paste its direct public HTTPS image link. Saving replaces image sources while keeping typography, tables, dimensions and text, updates the saved signature, and saves the current draft. Previously submitted campaign snapshots keep their original content. Review the preview and confirm launch again afterward.
+Upload your HTML signature and replace missing images inside the CRM. Uploaded images are saved with the signature. SMTP sends them as inline images; Brevo automatically publishes them through the CRM and uses public HTTPS image links. You do not need to upload files to Brevo or paste image URLs.
 
-This step requires hosting the image: a local development server cannot provide a public HTTPS image address to email recipients. The CRM does not upload images to a third party automatically. A URL format check does not confirm remote availability; use a publicly accessible direct image link rather than a private/shared page. See [Brevo Content library instructions](https://help.brevo.com/hc/en-us/articles/4504463584786-Add-and-manage-images-in-the-Content-library).
+For Brevo, configure the backend's `EMAIL_IMAGE_BASE_URL` to the public HTTPS backend origin (without `/api/v1`), or use `FRONTEND_BASE_URL` when its `/api` path proxies to the backend. Images are stored in PostgreSQL and survive deployments. Apply backend migrations before use. Published image links are public and retained for previously sent messages. Localhost cannot serve images to email recipients, and email clients may still ask recipients to allow images.
 
 ## Docker: frontend, API, PostgreSQL and email worker
 

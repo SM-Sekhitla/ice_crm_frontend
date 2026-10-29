@@ -310,8 +310,10 @@ export function SignatureManager({
               </div>
               <p className="form-hint">
                 Images referenced by HTTPS URLs remain remote. Uploaded
-                replacement images are embedded in the saved signature.
-                Stylesheets, scripts, forms, and unsafe styles are removed.
+                replacement images are saved with your signature. SMTP sends
+                them inline; Brevo automatically hosts them through your CRM. No
+                separate Brevo upload is needed. Stylesheets, scripts, forms,
+                and unsafe styles are removed.
               </p>
               {unresolved.length > 0 && (
                 <p className="field-error">

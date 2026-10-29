@@ -1,4 +1,3 @@
-import { BrevoImagePreparation } from "./BrevoImagePreparation";
 import { embeddedEmailImages } from "../../lib/email-images";
 import { SignatureManager } from "../signatures/SignatureManager";
 import { lazy, Suspense, useMemo, useState } from "react";
@@ -84,7 +83,6 @@ export function CampaignWizard({
   const [error, setError] = useState("");
   const [discard, setDiscard] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const [prepareImages, setPrepareImages] = useState(false);
   const [ack, setAck] = useState(false);
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState("");
@@ -139,10 +137,6 @@ export function CampaignWizard({
       }),
     [draft.bodyHtml, signature?.html],
   );
-  const brevoImagesBlocked =
-    db.emailProvider === "brevo" &&
-    delivery === "email" &&
-    embeddedImages.length > 0;
   const person =
     rows.find((r) => r.contact.id === previewId)?.contact ??
     eligible[0]?.contact ??
@@ -665,14 +659,11 @@ export function CampaignWizard({
                     )}
                   </div>
                 )}
-                {db.emailProvider === "brevo" && embeddedImages.length > 0 && (
+                {embeddedImages.length > 0 && (
                   <div className="callout">
-                    Your message or signature contains {embeddedImages.length}{" "}
-                    embedded image{embeddedImages.length === 1 ? "" : "s"}.
-                    Brevo delivery needs public image links.{" "}
-                    <Button onClick={() => setPrepareImages(true)}>
-                      Prepare images for Brevo
-                    </Button>
+                    Uploaded images are prepared automatically when sending.
+                    SMTP includes them inline; Brevo uses images hosted by your
+                    CRM. No upload to Brevo is needed.
                   </div>
                 )}
                 <div className="campaign-signature-actions">
@@ -1012,8 +1003,9 @@ export function CampaignWizard({
           {db.emailProvider === "brevo" && (
             <p className="form-hint">
               Brevo sends from {sender?.senderName ?? "the selected sender"} (
-              {sender?.email ?? "select a sender"}). Use HTTPS image URLs;
-              embedded signature images require SMTP.
+              {sender?.email ?? "select a sender"}). Uploaded signature images
+              are hosted automatically by your CRM. No manual image links are
+              needed.
             </p>
           )}
           <label>
@@ -1049,21 +1041,6 @@ export function CampaignWizard({
               <span>{scheduled.replace("T", " at ")} SAST</span>
             )}
           </div>
-          {brevoImagesBlocked && (
-            <div className="callout">
-              Prepare {embeddedImages.length} embedded image
-              {embeddedImages.length === 1 ? "" : "s"} before sending. Your
-              layout will stay the same.{" "}
-              <Button
-                onClick={() => {
-                  setConfirm(false);
-                  setPrepareImages(true);
-                }}
-              >
-                Prepare images for Brevo
-              </Button>
-            </div>
-          )}
           <label className="checkbox-label">
             <input
               type="checkbox"
@@ -1088,7 +1065,7 @@ export function CampaignWizard({
           </Button>
           <Button
             variant="primary"
-            disabled={!ack || brevoImagesBlocked}
+            disabled={!ack}
             loading={busy}
             onClick={async () => {
               try {
@@ -1174,36 +1151,6 @@ export function CampaignWizard({
           </div>
         </form>
       </Modal>
-      {prepareImages && (
-        <BrevoImagePreparation
-          bodyHtml={draft.bodyHtml}
-          signatureHtml={signature?.html ?? ""}
-          onClose={() => setPrepareImages(false)}
-          onApply={async (bodyHtml, signatureHtml) => {
-            if (signature && signatureHtml !== signature.html)
-              await api.updateSignature(signature.id, {
-                name: signature.name,
-                html: signatureHtml,
-                sourceFileName: signature.sourceFileName ?? "",
-              });
-            const updatedDraft = { ...draft, bodyHtml };
-            const campaignId = await api.saveCampaign(
-              updatedDraft,
-              user.id,
-              id,
-            );
-            setDraft(updatedDraft);
-            setId(campaignId);
-            setBaseline(JSON.stringify(updatedDraft));
-            setAck(false);
-            setError("");
-            await refresh();
-            toast.success(
-              "Image links saved. Review your preview, then launch the campaign.",
-            );
-          }}
-        />
-      )}
       {signatureManager && (
         <SignatureManager
           onClose={() => setSignatureManager(false)}
