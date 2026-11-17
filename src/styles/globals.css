@@ -9093,17 +9093,15 @@ button.portfolio-symbol:hover {
     justify-content: center;
     gap: 18px;
     padding: 22px 20px max(22px, env(safe-area-inset-bottom, 0px));
-    background: #fff;
+    background: var(--canvas);
     color: var(--ink);
     font-size: 13px;
-    border-top: 1px solid var(--border);
   }
-  .mobile-login-footer svg {
-    width: 42px;
-    height: 42px;
-    background: var(--charcoal);
-    border-radius: 50%;
-    overflow: hidden;
+  .mobile-login-footer img {
+    width: 96px;
+    height: auto;
+    display: block;
+    mix-blend-mode: multiply;
   }
   /* Keep every editable control at iOS's non-zooming text size. */
   .app input:not([type="checkbox"]):not([type="radio"]),

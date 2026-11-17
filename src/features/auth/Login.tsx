@@ -130,13 +130,10 @@ export function Login() {
       </div>
       <footer className="mobile-login-footer">
         <span>Powered by</span>
-        <svg
-          viewBox="0 0 444 444"
-          role="img"
-          aria-label="Industrial Computing Engineering"
-        >
-          <image href="/brand/ice-logo.png" width="2331" height="444" />
-        </svg>
+        <img
+          src="/brand/industrial-logo.png"
+          alt="Industrial Computing Engineering"
+        />
       </footer>
     </div>
   );
