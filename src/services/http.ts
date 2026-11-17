@@ -185,3 +185,19 @@ export async function activateAccount(
   saveSession(result);
   return result.user;
 }
+
+// Public contact forms deliberately omit the signed-in session's bearer token.
+export function verifyContactIntake(token: string) {
+  return send("/public/contact-intake/verify", json("POST", { token })).then(
+    decode<{ available: boolean }>,
+  );
+}
+export function submitContactIntake(
+  token: string,
+  details: import("../features/contact-intake/links").IntakeDetails,
+) {
+  return send(
+    "/public/contact-intake/submit",
+    json("POST", { token, ...details }),
+  ).then(decode<{ message: string }>);
+}

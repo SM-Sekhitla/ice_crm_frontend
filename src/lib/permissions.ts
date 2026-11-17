@@ -79,6 +79,9 @@ export const canManageAssociation = (user: User, association: Association) =>
 export const canEditContact = (user: User, db: Database, contactId: string) =>
   can(user, "contacts.edit") &&
   (user.role === "Super Admin" ||
+    db.contacts.some(
+      (contact) => contact.id === contactId && contact.capturedBy === user.id,
+    ) ||
     db.associations.some(
       (association) =>
         association.contactId === contactId &&

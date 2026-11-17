@@ -1,3 +1,4 @@
+import { ContactQrButton } from "../contact-intake/ContactQr";
 import { PwaSettings } from "../../pwa/PwaSettings";
 import { useState, type FormEvent } from "react";
 import { Database, MailPlus, Pencil, ShieldCheck, Trash2 } from "lucide-react";
@@ -186,11 +187,14 @@ export function Profile() {
           <dt>Contacts managed</dt>
           <dd>
             {
-              new Set(
-                db.associations
+              new Set([
+                ...db.contacts
+                  .filter((contact) => contact.capturedBy === user.id)
+                  .map((contact) => contact.id),
+                ...db.associations
                   .filter((a) => a.ownerId === user.id)
                   .map((a) => a.contactId),
-              ).size
+              ]).size
             }
           </dd>
           <dt>Time zone</dt>
@@ -200,6 +204,10 @@ export function Profile() {
             <Button onClick={() => setSignatures(true)}>
               Manage email signatures
             </Button>
+          </dd>
+          <dt>Client contact form</dt>
+          <dd>
+            <ContactQrButton />
           </dd>
           <dt>Authentication</dt>
           <dd>Secure CRM account</dd>

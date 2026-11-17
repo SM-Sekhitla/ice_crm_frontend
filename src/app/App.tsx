@@ -29,6 +29,7 @@ import {
 } from "../services/http";
 import { useUI } from "../store/ui";
 import { Shell } from "../components/layout/Shell";
+import { PublicContactForm } from "../features/contact-intake/PublicContactForm";
 import { ActivateAccount } from "../features/auth/ActivateAccount";
 import { WelcomeTour } from "../features/onboarding/WelcomeTour";
 import { Login } from "../features/auth/Login";
@@ -76,6 +77,8 @@ function Workspace() {
     select: (state) => state.location.pathname,
   });
   const activating = pathname.replace(/\/$/, "") === "/activate";
+  const publicIntake = pathname.replace(/\/$/, "") === "/connect";
+  const publicPage = activating || publicIntake;
   const userId = useUI((s) => s.userId);
   const client = useQueryClient();
   const [restoring, setRestoring] = useState(true);
@@ -97,10 +100,10 @@ function Workspace() {
       client.clear();
       useUI.getState().logout();
     });
-    if (activating) setRestoring(false);
+    if (publicPage) setRestoring(false);
     else void restore();
     return unsubscribe;
-  }, [client, restore, activating]);
+  }, [client, restore, publicPage]);
   const [addOpen, setAddOpen] = useState(false);
   const [contactId, setContactId] = useState<string | null>(null);
   const {
@@ -111,7 +114,7 @@ function Workspace() {
   } = useQuery({
     queryKey: ["database", userId],
     queryFn: () => api.getDatabase(userId!),
-    enabled: !!userId && !restoring && !activating,
+    enabled: !!userId && !restoring && !publicPage,
     retry: (attempt, error) =>
       !(error instanceof ApiError && error.status < 500) && attempt < 1,
     refetchInterval: 15000,
@@ -124,6 +127,7 @@ function Workspace() {
     setAddOpen(false);
     setContactId(null);
   }, [userId]);
+  if (publicIntake) return <PublicContactForm />;
   if (activating) return <ActivateAccount />;
   if (restoring)
     return <div className="workspace-loader">Restoring your session…</div>;
@@ -205,6 +209,11 @@ const root = createRootRoute({
   ),
 });
 const routes = [
+  createRoute({
+    getParentRoute: () => root,
+    path: "/connect",
+    component: () => null,
+  }),
   createRoute({
     getParentRoute: () => root,
     path: "/calendar",

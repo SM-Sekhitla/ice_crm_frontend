@@ -66,6 +66,7 @@ export type ProductInput = Omit<Product, "id" | "createdAt">;
 
 export interface Contact {
   id: string;
+  capturedBy?: string | null;
   firstName: string;
   lastName: string;
   email: string;

@@ -1,3 +1,4 @@
+import { ContactQrButton } from "../contact-intake/ContactQr";
 import { stages } from "../../types";
 import { toast } from "sonner";
 import { can, canEditContact } from "../../lib/permissions";
@@ -397,6 +398,7 @@ export function Contacts({
         }
         actions={
           <>
+            {!isClient && <ContactQrButton />}
             <Button onClick={exportRows}>
               <ArrowDownToLine size={15} />
               Export {table.getSelectedRowModel().rows.length ? "selected" : ""}
