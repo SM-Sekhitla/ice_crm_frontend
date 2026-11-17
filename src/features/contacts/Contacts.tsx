@@ -256,8 +256,8 @@ export function Contacts({
           const u = db.users.find(
             (u) =>
               u.id ===
-              db.associations.find((a) => a.contactId === row.original.id)
-                ?.ownerId,
+              (db.associations.find((a) => a.contactId === row.original.id)
+                ?.ownerId ?? row.original.capturedBy),
           );
           return u ? (
             <span className="owner-cell">

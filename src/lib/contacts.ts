@@ -137,15 +137,21 @@ export function filterContacts(
   return db.contacts.filter((c) => {
     const relationships = db.associations.filter((a) => a.contactId === c.id);
     return (
-      relationships.some(
-        (a) =>
-          (!isClient || a.stage === "Client") &&
-          (!filters.product || a.productId === filters.product) &&
-          (!filters.stage || a.stage === filters.stage) &&
-          (!filters.owner || a.ownerId === filters.owner) &&
-          (view !== "My contacts" || a.ownerId === userId) &&
-          (view !== "Not yet converted" || a.stage === "Contact"),
-      ) &&
+      ((relationships.length === 0 &&
+        !isClient &&
+        !filters.product &&
+        (!filters.stage || filters.stage === "Contact") &&
+        (!filters.owner || c.capturedBy === filters.owner) &&
+        (view !== "My contacts" || c.capturedBy === userId)) ||
+        relationships.some(
+          (a) =>
+            (!isClient || a.stage === "Client") &&
+            (!filters.product || a.productId === filters.product) &&
+            (!filters.stage || a.stage === filters.stage) &&
+            (!filters.owner || a.ownerId === filters.owner) &&
+            (view !== "My contacts" || a.ownerId === userId) &&
+            (view !== "Not yet converted" || a.stage === "Contact"),
+        )) &&
       `${c.firstName} ${c.lastName} ${c.email} ${c.company} ${c.phone} ${(c.tags ?? []).join(" ")}`
         .toLowerCase()
         .includes(search.toLowerCase()) &&
