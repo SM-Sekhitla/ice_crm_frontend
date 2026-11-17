@@ -1,6 +1,6 @@
 import { Brand } from "../shared/Brand";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
@@ -16,6 +16,8 @@ import {
   FileText,
   LogOut,
   Mail,
+  MoreHorizontal,
+  WifiOff,
   Menu,
   PanelLeftClose,
   Plus,
@@ -33,6 +35,7 @@ import { signOut } from "../../services/http";
 import { toast } from "sonner";
 import { useUI } from "../../store/ui";
 import { Avatar, Button, Modal, Tip } from "../ui/primitives";
+import { usePwa } from "../../pwa/client";
 import { can } from "../../lib/permissions";
 const groups = [
   {
@@ -81,6 +84,11 @@ const names: Record<string, string> = {
   "/settings": "Settings",
 };
 export function Shell({ children }: { children: ReactNode }) {
+  const pwa = usePwa();
+  const sidebar = useRef<HTMLElement>(null);
+  const [smallScreen, setSmallScreen] = useState(
+    () => window.matchMedia("(max-width: 760px)").matches,
+  );
   const reducedMotion = useReducedMotion();
   const { user, db, addContact, openContact } = useCRM();
   const collapsed = useUI((s) => s.collapsed);
@@ -122,6 +130,51 @@ export function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMobile(false);
   }, [path]);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 760px)");
+    const resize = () => {
+      setSmallScreen(media.matches);
+      if (!media.matches) setMobile(false);
+    };
+    media.addEventListener("change", resize);
+    return () => media.removeEventListener("change", resize);
+  }, []);
+  useEffect(() => {
+    if (!mobile || !smallScreen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusable = () =>
+      Array.from(
+        sidebar.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not(:disabled), [tabindex="0"]',
+        ) ?? [],
+      ).filter((element) => element.getClientRects().length);
+    focusable()[0]?.focus();
+    const handle = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobile(false);
+      }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      const first = items[0],
+        last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", handle);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handle);
+      previous?.focus();
+    };
+  }, [mobile, smallScreen]);
   const results = [
     ...db.contacts
       .filter((c) =>
@@ -181,11 +234,26 @@ export function Shell({ children }: { children: ReactNode }) {
         aria-label="Close navigation"
         onClick={() => setMobile(false)}
       />
-      <aside className="sidebar">
+      <aside
+        className="sidebar"
+        ref={sidebar}
+        id="workspace-navigation"
+        role={mobile && smallScreen ? "dialog" : undefined}
+        aria-modal={mobile && smallScreen ? true : undefined}
+        aria-label="Workspace navigation"
+        inert={smallScreen && !mobile ? true : undefined}
+      >
         <div className="sidebar-brand">
-          <Link to="/" aria-label="CRM home">
+          <Link to="/" aria-label="CRM home" onClick={() => setMobile(false)}>
             <Brand />
           </Link>
+          <button
+            className="icon-button mobile-sidebar-close"
+            aria-label="Close navigation"
+            onClick={() => setMobile(false)}
+          >
+            <X size={21} />
+          </button>
           <button
             className="icon-button collapse-button"
             aria-label="Collapse sidebar"
@@ -206,6 +274,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   <Tip label={item.title} key={item.path}>
                     <Link
                       to={item.path}
+                      onClick={() => setMobile(false)}
                       data-tour={item.path}
                       className={`nav-item ${path === item.path ? "active" : ""}`}
                     >
@@ -234,18 +303,30 @@ export function Shell({ children }: { children: ReactNode }) {
               <br />
               Real opportunities.
             </p>
-            <button onClick={() => setHelp(true)}>
+            <button
+              onClick={() => {
+                setMobile(false);
+                setHelp(true);
+              }}
+            >
               Your workspace guide <ArrowIcon />
             </button>
           </div>
           <Link
             to="/settings"
+            onClick={() => setMobile(false)}
             className={`nav-item ${path === "/settings" ? "active" : ""}`}
           >
             <Settings2 size={18} />
             <span>Settings</span>
           </Link>
-          <button className="nav-item" onClick={() => setHelp(true)}>
+          <button
+            className="nav-item"
+            onClick={() => {
+              setMobile(false);
+              setHelp(true);
+            }}
+          >
             <CircleHelp size={18} />
             <span>Help & getting started</span>
             <span className="shortcut">?</span>
@@ -270,13 +351,19 @@ export function Shell({ children }: { children: ReactNode }) {
               >
                 <DropdownMenu.Label>{user.email}</DropdownMenu.Label>
                 <DropdownMenu.Item
-                  onSelect={() => navigate({ to: "/profile" })}
+                  onSelect={() => {
+                    setMobile(false);
+                    void navigate({ to: "/profile" });
+                  }}
                 >
                   <UserRound size={15} />
                   My profile
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
-                  onSelect={() => navigate({ to: "/settings" })}
+                  onSelect={() => {
+                    setMobile(false);
+                    void navigate({ to: "/settings" });
+                  }}
                 >
                   <Settings2 size={15} />
                   Account settings
@@ -295,12 +382,17 @@ export function Shell({ children }: { children: ReactNode }) {
           </DropdownMenu.Root>
         </div>
       </aside>
-      <div className="main-shell">
+      <div
+        className="main-shell"
+        inert={mobile && smallScreen ? true : undefined}
+      >
         <header className="topbar">
           <div className="breadcrumbs">
             <button
               className="icon-button mobile-menu"
               aria-label="Open navigation"
+              aria-expanded={mobile}
+              aria-controls="workspace-navigation"
               onClick={() => setMobile(true)}
             >
               <Menu size={20} />
@@ -377,6 +469,17 @@ export function Shell({ children }: { children: ReactNode }) {
             </button>
           </div>
         </header>
+        {!pwa.online && (
+          <div className="connection-notice" role="status">
+            <WifiOff size={15} />
+            <span>You’re offline. Reconnect to load or save records.</span>
+          </div>
+        )}
+        {pwa.updateReady && (
+          <Link to="/settings" className="pwa-update-notice">
+            A new version is ready. Open Settings to update.
+          </Link>
+        )}
         <motion.main
           className="main-content"
           key={path}
@@ -398,6 +501,56 @@ export function Shell({ children }: { children: ReactNode }) {
           </span>
         </footer>
       </div>
+      <nav
+        className="mobile-dock"
+        aria-label="Quick navigation"
+        inert={mobile && smallScreen ? true : undefined}
+      >
+        <Link
+          to="/"
+          className={path === "/" ? "active" : ""}
+          aria-current={path === "/" ? "page" : undefined}
+        >
+          <LayoutDashboard size={21} />
+          <span>Home</span>
+        </Link>
+        <Link
+          to="/contacts"
+          className={path === "/contacts" ? "active" : ""}
+          aria-current={path === "/contacts" ? "page" : undefined}
+        >
+          <ContactRound size={21} />
+          <span>Contacts</span>
+        </Link>
+        <button
+          className="mobile-dock-create"
+          onClick={addContact}
+          aria-label="Add contact"
+        >
+          <Plus size={29} strokeWidth={2} />
+        </button>
+        <Link
+          to="/calendar"
+          className={path === "/calendar" ? "active" : ""}
+          aria-current={path === "/calendar" ? "page" : undefined}
+        >
+          <CalendarDays size={21} />
+          <span>Calendar</span>
+        </Link>
+        <button
+          className={
+            !["/", "/contacts", "/calendar"].includes(path) || mobile
+              ? "active"
+              : ""
+          }
+          aria-expanded={mobile}
+          aria-controls="workspace-navigation"
+          onClick={() => setMobile(true)}
+        >
+          <MoreHorizontal size={22} />
+          <span>More</span>
+        </button>
+      </nav>
       <Modal
         open={searchOpen}
         onOpenChange={setSearchOpen}

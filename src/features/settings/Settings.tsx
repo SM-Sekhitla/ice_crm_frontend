@@ -1,3 +1,4 @@
+import { PwaSettings } from "../../pwa/PwaSettings";
 import { useState, type FormEvent } from "react";
 import { Database, MailPlus, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import { RecordActions } from "../../components/ui/RecordActions";
@@ -65,6 +66,7 @@ export function Settings() {
           </div>
         </section>
         <PasswordForm />
+        <PwaSettings />
       </div>
     </>
   );

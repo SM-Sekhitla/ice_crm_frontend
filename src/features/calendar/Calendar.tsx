@@ -60,7 +60,9 @@ export function Calendar() {
   const { db, user, openContact, refresh } = useCRM();
   const client = useQueryClient();
   const [focus, setFocus] = useState(() => dayKey(new Date()));
-  const [view, setView] = useState<CalendarView>("Month");
+  const [view, setView] = useState<CalendarView>(() =>
+    window.matchMedia("(max-width: 760px)").matches ? "Agenda" : "Month",
+  );
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("");
   const [mine, setMine] = useState(false);

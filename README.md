@@ -175,3 +175,13 @@ Deploy both apps and apply backend migration `f13b4505e006` before using the cal
 ## System Logs explorer
 
 The Super Admin logs page now provides **modules** and **services** folders, file-name filtering, retained-entry counts and modification dates, a monospace preview, log-content search, severity/category filters, pagination and live refresh. Download exports up to the latest 2,000 matching entries in chronological order. The entries are protected, redacted PostgreSQL records represented as virtual `.log` files; the interface does not expose arbitrary server paths or files. Preview/export timestamps use UTC, and file modification labels use SAST.
+
+## Installable CRM and mobile navigation
+
+The production build includes a PWA manifest, company-logo home screen icons and a versioned service worker. Deploy using the existing `npm run build` command and Docker setup; the build also generates `dist/sw.js`. Serve the site over HTTPS. No backend changes or additional environment variables are needed for the PWA.
+
+On a supported browser, open **Settings → CRM on your device → Install CRM**. If the browser does not offer an install prompt, use its install/home-screen menu. On iPhone/iPad, open the site in Safari, choose **Share → Add to Home Screen**. Installation is optional; ordinary browser access continues to work. The PWA worker is disabled during `npm run dev` to avoid stale development builds.
+
+At widths up to 760px, a floating charcoal navigation bar shows **Home, Contacts, +, Calendar and More**. The red **+** opens the existing add-contact form from any module. **More** opens all remaining modules and account options, with the same role restrictions as desktop. Desktop navigation keeps its sidebar. The calendar initially uses Agenda on mobile; Month and Week remain selectable. Wide data tables, email signatures and the weekly calendar scroll within their panels. Mobile forms stack, inputs avoid iOS focus zoom, and the layout reserves space for the dock and device safe areas.
+
+The service worker caches only explicit public app assets. It never stores API responses, authenticated requests, activation pages, exports or navigated HTML pages. CRM records require a network connection; offline navigation shows a reconnect screen and the open app shows an offline notice. This is not offline editing or background synchronization. Updates wait until you choose **Settings → Update app**, which asks you to save changes before reloading. Docker serves `sw.js` and the manifest without long-lived HTTP caching so new deployments can be detected.
