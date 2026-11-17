@@ -50,6 +50,18 @@ export function Login() {
           <span>EST. 2012 / SOUTH AFRICA</span>
         </div>
       </div>
+      <header className="mobile-login-hero">
+        <svg viewBox="0 0 444 444" aria-hidden="true">
+          <image href="/brand/ice-logo.png" width="2331" height="444" />
+        </svg>
+        <span>ICE / BUSINESS DEVELOPMENT</span>
+        <h1>
+          Welcome
+          <br />
+          back
+        </h1>
+        <p>Your next opportunity is waiting. Let’s get to work.</p>
+      </header>
       <div className="login-panel">
         <form
           onSubmit={async (e) => {
@@ -58,6 +70,10 @@ export function Login() {
             setLoading(true);
             try {
               const user = await signIn(email.trim(), password);
+              // Release the keyboard before mounting the workspace.
+              if (document.activeElement instanceof HTMLElement)
+                document.activeElement.blur();
+              window.scrollTo(0, 0);
               login(user.id);
             } catch (error) {
               setError((error as Error).message);
@@ -73,6 +89,7 @@ export function Login() {
             Email address
             <input
               type="email"
+              placeholder="you@company.co.za"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -87,6 +104,7 @@ export function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                placeholder="Enter your password"
                 autoComplete="current-password"
               />
               <button
@@ -110,6 +128,16 @@ export function Login() {
           ICE CRM · Industrial Computing Engineering
         </small>
       </div>
+      <footer className="mobile-login-footer">
+        <span>Powered by</span>
+        <svg
+          viewBox="0 0 444 444"
+          role="img"
+          aria-label="Industrial Computing Engineering"
+        >
+          <image href="/brand/ice-logo.png" width="2331" height="444" />
+        </svg>
+      </footer>
     </div>
   );
 }
