@@ -23,12 +23,17 @@ const db = {
   users: [],
   products: [],
 } as unknown as Database;
-describe("campaign audience ownership", () => {
-  it("marks a shared contact owned by another user ineligible", () => {
+describe("shared campaign audience", () => {
+  it("allows contacts owned by another user with product access", () => {
     expect(audience(db, user, "product")[0]).toMatchObject({
-      eligible: false,
-      reason: "Assigned to another user for this product",
+      eligible: true,
+      reason: "",
     });
+  });
+  it("excludes users without product access", () => {
+    expect(
+      audience(db, { ...user, productIds: [] }, "product")[0].eligible,
+    ).toBe(false);
   });
   it("permits own relationships and admin access", () => {
     expect(audience(db, { ...user, id: "other" }, "product")[0].eligible).toBe(
