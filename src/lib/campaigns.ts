@@ -71,7 +71,14 @@ export function audience(db: Database, user: User, productId: string) {
     .map((contact) => {
       let reason = "";
       const email = contact.email.trim().toLowerCase();
-      if (contact.doNotEmail) reason = "Do not email";
+      if (
+        user.role !== "Super Admin" &&
+        !relations.some(
+          (a) => a.contactId === contact.id && a.ownerId === user.id,
+        )
+      )
+        reason = "Assigned to another user for this product";
+      else if (contact.doNotEmail) reason = "Do not email";
       else if (!contact.consent) reason = "No marketing consent";
       else if (!z.email().safeParse(email).success) reason = "Invalid email";
       else if (emails.has(email)) reason = "Duplicate email";
